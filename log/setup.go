@@ -10,6 +10,7 @@ func Setup() (*zap.Logger, error) {
 	profile := viper.GetString("profile")
 	level := viper.GetString("loglevel")
 	showStackTrace := viper.GetBool("stacktrace")
+	enableTimestamp := viper.GetBool("log.timestamp")
 
 	var zapLevel zapcore.Level
 	if err := zapLevel.Set(level); err != nil {
@@ -22,8 +23,7 @@ func Setup() (*zap.Logger, error) {
 		cfg = zap.NewProductionConfig()
 	} else {
 		cfg = zap.NewDevelopmentConfig()
-		cfg.EncoderConfig = zapcore.EncoderConfig{
-			TimeKey:        "ts",
+		encoderConfig := zapcore.EncoderConfig{
 			LevelKey:       "level",
 			NameKey:        "logger",
 			CallerKey:      "caller",
@@ -31,10 +31,14 @@ func Setup() (*zap.Logger, error) {
 			StacktraceKey:  "stacktrace",
 			LineEnding:     zapcore.DefaultLineEnding,
 			EncodeLevel:    zapcore.CapitalColorLevelEncoder,
-			EncodeTime:     zapcore.RFC3339TimeEncoder,
 			EncodeDuration: zapcore.StringDurationEncoder,
 			EncodeCaller:   zapcore.ShortCallerEncoder,
 		}
+		if enableTimestamp {
+			encoderConfig.TimeKey = "ts"
+			encoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
+		}
+		cfg.EncoderConfig = encoderConfig
 	}
 
 	cfg.Level = zap.NewAtomicLevelAt(zapLevel)
@@ -46,6 +50,5 @@ func Setup() (*zap.Logger, error) {
 	}
 
 	zap.ReplaceGlobals(logger)
-
 	return logger, nil
 }
