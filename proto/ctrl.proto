@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package ctrl;
+
+option go_package = "./proto;ctrlpb";
+
+message AddrPair {
+  string localAddr = 1;
+  string remoteAddr = 2;
+}
+
+message Tunnel {
+  string id = 1;
+  string user = 2;
+  string addr = 3;
+  repeated AddrPair address_pair = 4;
+  string pw = 5;
+  bytes privkey = 6;
+}
+
+message Fwd {
+  string id = 1;
+  Tunnel parent = 2;
+  AddrPair addrs = 3;
+}
+
+message PsRequest {}
+
+message PsResponse {
+  repeated Fwd fwds = 1;
+  repeated string errors = 2;
+}
+
+message OpenRequest {
+  repeated Tunnel tunnels = 1;
+  repeated string errors = 2;
+}
+
+message OpenResponse {
+  repeated string opened_ids = 1;
+  repeated string errors = 2;
+}
+
+message CloseRequest {
+  repeated string ids = 1;
+}
+
+message CloseResponse {
+  repeated string closed_ids = 1;
+  repeated string errors = 2;
+}
+
+service TunnelService {
+  rpc Ps (PsRequest) returns (PsResponse);
+  rpc OpenFwd (OpenRequest) returns (OpenResponse);
+  rpc CloseFwd (CloseRequest) returns (CloseResponse);
+}
