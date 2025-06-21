@@ -153,8 +153,11 @@ func (m *Manager) CloseFwd(_ context.Context, req *ctrlpb.CloseRequest) (*ctrlpb
 				errors = append(errors, errorsS...)
 			}
 			if tunConnMap[tunHash] <= 0 {
-				zap.L().Info("closed empty SSH tunnel")
 				v.Close()
+				m.mu.Lock()
+				delete(m.tunnels, tunHash)
+				m.mu.Unlock()
+				zap.L().Info("closed empty SSH tunnel")
 			}
 		} else {
 			errors = append(errors, fmt.Sprintf("could not find tunnel by { \"id\": \"%s\"}", id))
