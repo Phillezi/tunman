@@ -5,9 +5,12 @@ BUILD_DIR=bin
 EXT=$(if $(filter windows,$(GOOS)),.exe,)
 
 # Targets
-.PHONY: all build/* test release install clean lint
+.PHONY: all proto build/* test release install clean lint
 
 all: build/$(CLI_BINARY_NAME) build/$(DAEMON_BINARY_NAME)
+
+proto:
+	@protoc --proto_path=proto --go_out=proto --go-grpc_out=proto --go_opt=paths=source_relative --go-grpc_opt=paths=source_relative ctrl.proto
 
 build/%:
 	@echo "Building $*..."

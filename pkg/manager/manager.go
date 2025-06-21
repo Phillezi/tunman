@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/Phillezi/tunman-remaster/pkg/tunnel"
@@ -86,9 +87,8 @@ func (m *Manager) Ps(_ context.Context, _ *ctrlpb.PsRequest) (*ctrlpb.PsResponse
 	var fwds []*ctrlpb.Fwd
 	for _, t := range m.tunnels {
 		parent := t.Proto()
-		for _, a := range parent.AddressPair {
-			// TODO: proper ids
-			fwds = append(fwds, &ctrlpb.Fwd{Id: "TODO", Addrs: a, Parent: parent})
+		for i, a := range parent.AddressPair {
+			fwds = append(fwds, &ctrlpb.Fwd{Id: Ser(parent.Id, i), Addrs: a, Parent: parent})
 		}
 	}
 
@@ -113,11 +113,35 @@ func (m *Manager) OpenFwd(_ context.Context, req *ctrlpb.OpenRequest) (*ctrlpb.O
 				zap.L().Warn("failed to forward", zap.String("remoteAddr", fw.RemoteAddr), zap.Error(err))
 				continue
 			}
+			opened = append(opened, Ser(remote.Hash(), tunnel.HashAddrPair(fw.LocalAddr, fw.RemoteAddr)))
 		}
-
-		// TODO: proper ids
-		opened = append(opened, remote.Hash())
 	}
 
 	return &ctrlpb.OpenResponse{OpenedIds: opened, Errors: errors}, nil
+}
+
+func (m *Manager) CloseFwd(_ context.Context, req *ctrlpb.CloseRequest) (*ctrlpb.CloseResponse, error) {
+	var closed []string
+	var errors []string = make([]string, 0)
+
+	for _, id := range req.Ids {
+		tunHash, addrHash, err := DeSer(id)
+		if err != nil {
+			errors = append(errors, err.Error())
+			zap.L().Warn("could not deserialize id into tunnel and addr hash", zap.Error(err))
+			continue
+		}
+		if v, ok := m.tunnels[tunHash]; ok {
+			closedD, errorsS := v.CloseFwd(addrHash)
+			if len(closedD) > 0 {
+				closed = append(closed, closedD...)
+			}
+			if len(errorsS) > 0 {
+				errors = append(errors, errorsS...)
+			}
+		} else {
+			errors = append(errors, fmt.Sprintf("could not find tunnel by { \"id\": \"%s\"}", id))
+		}
+	}
+	return &ctrlpb.CloseResponse{ClosedIds: closed, Errors: errors}, nil
 }

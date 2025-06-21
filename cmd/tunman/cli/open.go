@@ -45,7 +45,7 @@ var openCmd = &cobra.Command{
 					}
 					return cfg.PrivateKey
 				}(),
-				AddressPair: []*ctrlpb.AddrPair{{
+				AddressPair: map[string]*ctrlpb.AddrPair{"0": {
 					LocalAddr:  local,
 					RemoteAddr: remote,
 				}},

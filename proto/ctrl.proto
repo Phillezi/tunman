@@ -13,7 +13,7 @@ message Tunnel {
   string id = 1;
   string user = 2;
   string addr = 3;
-  repeated AddrPair address_pair = 4;
+  map<string, AddrPair> address_pair = 4;
   string pw = 5;
   bytes privkey = 6;
 }

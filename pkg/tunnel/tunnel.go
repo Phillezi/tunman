@@ -20,12 +20,14 @@ import (
 type AddressPair struct {
 	LocalAddr  string
 	RemoteAddr string
+
+	hash string
 }
 
-func AddrPairToProto(addrs []AddressPair) []*ctrlpb.AddrPair {
-	var protoAddrs = []*ctrlpb.AddrPair{}
-	for _, a := range addrs {
-		protoAddrs = append(protoAddrs, utils.PtrOf(a.Proto()))
+func AddrPairToProto(addrs map[string]*FwdConn) map[string]*ctrlpb.AddrPair {
+	protoAddrs := make(map[string]*ctrlpb.AddrPair, len(addrs))
+	for hash, a := range addrs {
+		protoAddrs[hash] = utils.PtrOf(a.AddrPair.Proto())
 	}
 	return protoAddrs
 }
@@ -35,6 +37,25 @@ func (a *AddressPair) Proto() ctrlpb.AddrPair {
 		LocalAddr:  a.LocalAddr,
 		RemoteAddr: a.RemoteAddr,
 	}
+}
+
+func HashAddrPair(localAddr, remoteAddr string) string {
+	data := []byte(localAddr + remoteAddr)
+	sum := sha256.Sum256(data)
+	return hex.EncodeToString(sum[:])
+}
+
+func (a *AddressPair) Hash() string {
+	if a.hash != "" {
+		return a.hash
+	}
+	a.hash = HashAddrPair(a.LocalAddr, a.RemoteAddr)
+	return a.hash
+}
+
+type FwdConn struct {
+	AddrPair  AddressPair
+	CloseChan chan struct{}
 }
 
 type Tunnel struct {
@@ -47,8 +68,8 @@ type Tunnel struct {
 
 	client *ssh.Client
 
-	activeConns []AddressPair
-	connMu      sync.RWMutex
+	conns  map[string]*FwdConn
+	connMu sync.RWMutex
 }
 
 type TunnelOpts struct {
@@ -103,7 +124,7 @@ func (t *Tunnel) Proto() *ctrlpb.Tunnel {
 		Id:          t.Hash(),
 		User:        t.uID.User,
 		Addr:        t.uID.Addr,
-		AddressPair: AddrPairToProto(t.activeConns),
+		AddressPair: AddrPairToProto(t.conns),
 	}
 }
 
@@ -145,7 +166,7 @@ func New(user, addr string, opts ...ConfigOption) (*Tunnel, error) {
 			User: user,
 			Addr: addr,
 		},
-		activeConns: make([]AddressPair, 0),
+		conns: make(map[string]*FwdConn),
 	}, nil
 }
 
@@ -171,9 +192,6 @@ func (t *Tunnel) Dial(network, addr string) (net.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	t.connMu.Lock()
-	defer t.connMu.Unlock()
-	t.activeConns = append(t.activeConns, AddressPair{RemoteAddr: addr})
 	return conn, nil
 }
 
@@ -189,6 +207,29 @@ func (t *Tunnel) Close() error {
 	return nil
 }
 
+func (t *Tunnel) CloseFwd(ids ...string) ([]string, []string) {
+	var closed []string
+	var errors []string
+	t.connMu.RLock()
+	defer t.connMu.RUnlock()
+	for _, id := range ids {
+		if v, ok := t.conns[id]; ok {
+			go func() {
+				select {
+				case v.CloseChan <- struct{}{}:
+					zap.L().Info("closed forward", zap.String("id", id))
+				default:
+					zap.L().Warn("could not close forward, channel full!", zap.String("id", id))
+				}
+			}()
+			closed = append(closed, id)
+		} else {
+			errors = append(errors, fmt.Sprintf("fwd with id %s not found", id))
+		}
+	}
+	return closed, errors
+}
+
 // Forward listens on localAddr (e.g. "localhost:8080") and forwards all connections
 // to remoteAddr (e.g. "localhost:5432") through the SSH tunnel.
 func (t *Tunnel) Forward(localAddr, remoteAddr string) error {
@@ -196,19 +237,34 @@ func (t *Tunnel) Forward(localAddr, remoteAddr string) error {
 	if err != nil {
 		return fmt.Errorf("listen error: %w", err)
 	}
+	closeMe := make(chan struct{}, 1)
+	defer close(closeMe)
+	ap := AddressPair{LocalAddr: localAddr, RemoteAddr: remoteAddr}
+	id := ap.Hash() // calc hash before locking (gets saved in the struct)
 	t.connMu.Lock()
-	t.activeConns = append(t.activeConns, AddressPair{LocalAddr: localAddr, RemoteAddr: remoteAddr})
+	t.conns[id] = &FwdConn{AddrPair: ap, CloseChan: closeMe}
 	t.connMu.Unlock()
-	fmt.Printf("Forwarding %s -> %s (via SSH)\n", localAddr, remoteAddr)
+	fmt.Printf("[%s] Forwarding %s -> %s (via SSH)\n", ap.Hash(), localAddr, remoteAddr)
+
+	rm := func() {
+		t.connMu.Lock()
+		defer t.connMu.Unlock()
+		delete(t.conns, id)
+	}
 
 	for {
 		select {
 		case <-t.ctx.Done():
 			zap.L().Info("ctx cancelled, exitting")
 			return nil
+		case <-closeMe:
+			zap.L().Info("Fwd handler recv close req, closing...", zap.String("id", id))
+			rm()
+			return nil
 		default:
 			localConn, err := listener.Accept()
 			if err != nil {
+				rm()
 				return fmt.Errorf("accept error: %w", err)
 			}
 
