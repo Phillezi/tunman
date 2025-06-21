@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"github.com/Phillezi/tunman-remaster/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -14,6 +15,9 @@ _/  |_ __ __  ____   _____ _____    ____
  |  | |  |  /   |  \  Y Y  \/ __ \|   |  \
  |__| |____/|___|  /__|_|  (____  /___|  /
                  \/      \/     \/     \/ `,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		log.Setup()
+	},
 }
 
 func init() {
