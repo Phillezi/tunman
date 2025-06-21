@@ -216,6 +216,12 @@ func (t *Tunnel) Close() error {
 	return nil
 }
 
+func (t *Tunnel) FwdsCount() int {
+	t.connMu.RLock()
+	defer t.connMu.RUnlock()
+	return len(t.conns)
+}
+
 func (t *Tunnel) CloseFwd(ids ...string) ([]string, []string) {
 	var closed []string
 	var errors []string

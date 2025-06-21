@@ -130,6 +130,8 @@ func (m *Manager) CloseFwd(_ context.Context, req *ctrlpb.CloseRequest) (*ctrlpb
 	var closed []string
 	var errors []string = make([]string, 0)
 
+	tunConnMap := make(map[string]int)
+
 	for _, id := range req.Ids {
 		tunHash, addrHash, err := ser.DeSer(id)
 		if err != nil {
@@ -138,12 +140,21 @@ func (m *Manager) CloseFwd(_ context.Context, req *ctrlpb.CloseRequest) (*ctrlpb
 			continue
 		}
 		if v, ok := m.tunnels[tunHash]; ok {
+			if _, ok := tunConnMap[tunHash]; !ok {
+				tunConnMap[tunHash] = v.FwdsCount()
+			}
 			closedD, errorsS := v.CloseFwd(addrHash)
-			if len(closedD) > 0 {
+			closedC := len(closedD)
+			if closedC > 0 {
 				closed = append(closed, closedD...)
+				tunConnMap[tunHash] -= closedC
 			}
 			if len(errorsS) > 0 {
 				errors = append(errors, errorsS...)
+			}
+			if tunConnMap[tunHash] <= 0 {
+				zap.L().Info("closed empty SSH tunnel")
+				v.Close()
 			}
 		} else {
 			errors = append(errors, fmt.Sprintf("could not find tunnel by { \"id\": \"%s\"}", id))
