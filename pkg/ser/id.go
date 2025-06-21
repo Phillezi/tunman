@@ -1,4 +1,4 @@
-package manager
+package ser
 
 import (
 	"encoding/base64"

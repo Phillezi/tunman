@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/Phillezi/tunman-remaster/pkg/ser"
 	"github.com/Phillezi/tunman-remaster/pkg/tunnel"
 	ctrlpb "github.com/Phillezi/tunman-remaster/proto"
 	"go.uber.org/zap"
@@ -72,8 +73,13 @@ func (m *Manager) Forward(remote tunnel.ConnOpts, localAddr string, remoteAddr s
 		return err
 	}
 
+	ap := tunnel.AddressPair{LocalAddr: localAddr, RemoteAddr: remoteAddr}
+	if tun.Exists(ap.Hash()) {
+		return fmt.Errorf("connection already exists")
+	}
+
 	go func() {
-		if err := tun.Forward(localAddr, remoteAddr); err != nil {
+		if err := tun.Forward(ap); err != nil {
 			zap.L().Error("error on fwd", zap.String("localAddr", localAddr), zap.String("remoteAddr", remoteAddr), zap.Error(err))
 		}
 	}()
@@ -88,7 +94,7 @@ func (m *Manager) Ps(_ context.Context, _ *ctrlpb.PsRequest) (*ctrlpb.PsResponse
 	for _, t := range m.tunnels {
 		parent := t.Proto()
 		for i, a := range parent.AddressPair {
-			fwds = append(fwds, &ctrlpb.Fwd{Id: Ser(parent.Id, i), Addrs: a, Parent: parent})
+			fwds = append(fwds, &ctrlpb.Fwd{Id: ser.Ser(parent.Id, i), Addrs: a, Parent: parent})
 		}
 	}
 
@@ -113,7 +119,7 @@ func (m *Manager) OpenFwd(_ context.Context, req *ctrlpb.OpenRequest) (*ctrlpb.O
 				zap.L().Warn("failed to forward", zap.String("remoteAddr", fw.RemoteAddr), zap.Error(err))
 				continue
 			}
-			opened = append(opened, Ser(remote.Hash(), tunnel.HashAddrPair(fw.LocalAddr, fw.RemoteAddr)))
+			opened = append(opened, ser.Ser(remote.Hash(), tunnel.HashAddrPair(fw.LocalAddr, fw.RemoteAddr)))
 		}
 	}
 
@@ -125,7 +131,7 @@ func (m *Manager) CloseFwd(_ context.Context, req *ctrlpb.CloseRequest) (*ctrlpb
 	var errors []string = make([]string, 0)
 
 	for _, id := range req.Ids {
-		tunHash, addrHash, err := DeSer(id)
+		tunHash, addrHash, err := ser.DeSer(id)
 		if err != nil {
 			errors = append(errors, err.Error())
 			zap.L().Warn("could not deserialize id into tunnel and addr hash", zap.Error(err))

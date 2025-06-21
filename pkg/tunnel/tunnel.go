@@ -2,15 +2,17 @@ package tunnel
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"io"
 	"net"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/Phillezi/tunman-remaster/pkg/ser"
 	ctrlpb "github.com/Phillezi/tunman-remaster/proto"
 	"github.com/Phillezi/tunman-remaster/utils"
 	"go.uber.org/zap"
@@ -40,9 +42,9 @@ func (a *AddressPair) Proto() ctrlpb.AddrPair {
 }
 
 func HashAddrPair(localAddr, remoteAddr string) string {
-	data := []byte(localAddr + remoteAddr)
-	sum := sha256.Sum256(data)
-	return hex.EncodeToString(sum[:])
+	h := fnv.New64a()
+	h.Write([]byte(localAddr + remoteAddr))
+	return strconv.FormatUint(h.Sum64(), 16) // 16 hex chars
 }
 
 func (a *AddressPair) Hash() string {
@@ -54,8 +56,8 @@ func (a *AddressPair) Hash() string {
 }
 
 type FwdConn struct {
-	AddrPair  AddressPair
-	CloseChan chan struct{}
+	AddrPair AddressPair
+	Cancel   context.CancelFunc
 }
 
 type Tunnel struct {
@@ -171,9 +173,9 @@ func New(user, addr string, opts ...ConfigOption) (*Tunnel, error) {
 }
 
 func (o *ConnOpts) Hash() string {
-	data := []byte(o.User + o.Addr)
-	sum := sha256.Sum256(data)
-	return hex.EncodeToString(sum[:])
+	h := fnv.New64a()
+	h.Write([]byte(o.User + o.Addr))
+	return strconv.FormatUint(h.Sum64(), 16) // 16 hex chars
 }
 
 func (t *Tunnel) Hash() string {
@@ -181,6 +183,13 @@ func (t *Tunnel) Hash() string {
 		t.hash = t.uID.Hash()
 	})
 	return t.hash
+}
+
+func (t *Tunnel) Exists(id string) bool {
+	t.connMu.RLock()
+	defer t.connMu.RUnlock()
+	_, found := t.conns[id]
+	return found
 }
 
 // Dial opens a connection through the tunnel to the target (e.g., localhost:3306).
@@ -215,14 +224,12 @@ func (t *Tunnel) CloseFwd(ids ...string) ([]string, []string) {
 	for _, id := range ids {
 		if v, ok := t.conns[id]; ok {
 			go func() {
-				select {
-				case v.CloseChan <- struct{}{}:
+				if v.Cancel != nil {
+					v.Cancel()
 					zap.L().Info("closed forward", zap.String("id", id))
-				default:
-					zap.L().Warn("could not close forward, channel full!", zap.String("id", id))
 				}
 			}()
-			closed = append(closed, id)
+			closed = append(closed, ser.Ser(t.Hash(), id))
 		} else {
 			errors = append(errors, fmt.Sprintf("fwd with id %s not found", id))
 		}
@@ -232,56 +239,71 @@ func (t *Tunnel) CloseFwd(ids ...string) ([]string, []string) {
 
 // Forward listens on localAddr (e.g. "localhost:8080") and forwards all connections
 // to remoteAddr (e.g. "localhost:5432") through the SSH tunnel.
-func (t *Tunnel) Forward(localAddr, remoteAddr string) error {
-	listener, err := net.Listen("tcp", localAddr)
+func (t *Tunnel) Forward(ap AddressPair) error {
+	listener, err := net.Listen("tcp", ap.LocalAddr)
 	if err != nil {
 		return fmt.Errorf("listen error: %w", err)
 	}
-	closeMe := make(chan struct{}, 1)
-	defer close(closeMe)
-	ap := AddressPair{LocalAddr: localAddr, RemoteAddr: remoteAddr}
-	id := ap.Hash() // calc hash before locking (gets saved in the struct)
-	t.connMu.Lock()
-	t.conns[id] = &FwdConn{AddrPair: ap, CloseChan: closeMe}
-	t.connMu.Unlock()
-	fmt.Printf("[%s] Forwarding %s -> %s (via SSH)\n", ap.Hash(), localAddr, remoteAddr)
+	defer listener.Close()
 
-	rm := func() {
+	id := ap.Hash()
+
+	ctx, cancel := context.WithCancel(t.ctx)
+	defer cancel()
+
+	t.connMu.Lock()
+	t.conns[id] = &FwdConn{AddrPair: ap, Cancel: func() {
+		listener.Close()
+		cancel()
+	}}
+	t.connMu.Unlock()
+	defer func() {
 		t.connMu.Lock()
-		defer t.connMu.Unlock()
 		delete(t.conns, id)
-	}
+		t.connMu.Unlock()
+	}()
+
+	zap.L().Info("Forwarding", zap.String("id", id), zap.String("local", ap.LocalAddr), zap.String("remote", ap.RemoteAddr))
 
 	for {
 		select {
-		case <-t.ctx.Done():
-			zap.L().Info("ctx cancelled, exitting")
-			return nil
-		case <-closeMe:
-			zap.L().Info("Fwd handler recv close req, closing...", zap.String("id", id))
-			rm()
+		case <-ctx.Done():
+			zap.L().Info("context cancelled, exiting", zap.String("id", id))
 			return nil
 		default:
 			localConn, err := listener.Accept()
 			if err != nil {
-				rm()
+				if opErr, ok := err.(*net.OpError); ok {
+					// Handle "use of closed network connection"
+					// the actual error is poll.errNetClosing, but it is private so i cant check if it is that
+					if strings.Contains(opErr.Err.Error(), "use of closed network connection") {
+						return nil
+					}
+				}
 				return fmt.Errorf("accept error: %w", err)
 			}
 
-			go func() {
-				defer localConn.Close()
-
-				remoteConn, err := t.Dial("tcp", remoteAddr)
-				if err != nil {
-					zap.L().Error("ssh dial error", zap.Error(err))
-					return
-				}
-				defer remoteConn.Close()
-
-				// Copy both ways
-				go io.Copy(remoteConn, localConn)
-				io.Copy(localConn, remoteConn)
-			}()
+			go t.handleForwardConn(ctx, localConn, ap.RemoteAddr)
 		}
 	}
+}
+
+func (t *Tunnel) handleForwardConn(ctx context.Context, localConn net.Conn, remoteAddr string) {
+	defer localConn.Close()
+
+	remoteConn, err := t.Dial("tcp", remoteAddr)
+	if err != nil {
+		zap.L().Error("SSH dial failed", zap.Error(err))
+		return
+	}
+	defer remoteConn.Close()
+
+	go func() {
+		<-ctx.Done()
+		localConn.Close()
+		remoteConn.Close()
+	}()
+
+	go io.Copy(remoteConn, localConn)
+	io.Copy(localConn, remoteConn)
 }
