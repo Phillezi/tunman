@@ -31,7 +31,7 @@ var psCmd = &cobra.Command{
 			}
 			fmt.Println("ID\tHOST\t\tFWD")
 			for _, fwd := range resp.Fwds {
-				fmt.Printf("%s\t[%s]\t[%s]:[%s]\n", fwd.Id, fwd.Parent.Addr, fwd.Addrs.LocalAddr, fwd.Addrs.RemoteAddr)
+				fmt.Printf("%s\t[%s:%d]\t[%s]:[%s]\n", fwd.Id, fwd.Parent.Host, fwd.Parent.Port, fwd.Addrs.LocalAddr, fwd.Addrs.RemoteAddr)
 			}
 		}
 	},

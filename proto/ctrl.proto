@@ -12,10 +12,11 @@ message AddrPair {
 message Tunnel {
   string id = 1;
   string user = 2;
-  string addr = 3;
-  map<string, AddrPair> address_pair = 4;
-  string pw = 5;
-  bytes privkey = 6;
+  string host = 3;
+  uint32 port = 4;
+  map<string, AddrPair> address_pair = 5;
+  string pw = 6;
+  bytes privkey = 7;
 }
 
 message Fwd {
@@ -50,8 +51,16 @@ message CloseResponse {
   repeated string errors = 2;
 }
 
+message CloseAllRequest {}
+
+message CloseAllResponse {
+  bool ok = 1;
+  string error = 2;
+}
+
 service TunnelService {
   rpc Ps (PsRequest) returns (PsResponse);
   rpc OpenFwd (OpenRequest) returns (OpenResponse);
   rpc CloseFwd (CloseRequest) returns (CloseResponse);
+  rpc CloseAllFwds (CloseAllRequest) returns (CloseAllResponse);
 }

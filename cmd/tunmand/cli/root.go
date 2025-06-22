@@ -51,6 +51,9 @@ func init() {
 
 	rootCmd.PersistentFlags().Bool("stacktrace", false, "Show the stack trace in error logs")
 	viper.BindPFlag("stacktrace", rootCmd.PersistentFlags().Lookup("stacktrace"))
+
+	rootCmd.PersistentFlags().Bool("insecure", false, "Dont validate against known_hosts")
+	viper.BindPFlag("insecure", rootCmd.PersistentFlags().Lookup("insecure"))
 }
 
 func ExecuteE() error {

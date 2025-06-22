@@ -32,12 +32,11 @@ var openCmd = &cobra.Command{
 			zap.L().Warn("using ssh agent is not impl yet")
 		}
 
-		addr := fmt.Sprintf("%s:%s", utils.Or(cfg.Host, host), utils.Or(port, cfg.Port, "22"))
-
 		if conn := connection.C(); conn != nil {
 			resp, err := conn.OpenFwd(interrupt.GetInstance().Context(), &ctrlpb.OpenRequest{Tunnels: []*ctrlpb.Tunnel{{
 				User: utils.Or(userVal, cfg.User, os.Getenv("USER")),
-				Addr: addr,
+				Host: cfg.Host,
+				Port: utils.ParsePort(utils.Or(port, cfg.Port)),
 				Pw:   pw,
 				Privkey: func() []byte {
 					if len(cfg.PrivateKey) == 0 {

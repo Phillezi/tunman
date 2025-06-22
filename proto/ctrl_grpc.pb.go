@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TunnelService_Ps_FullMethodName       = "/ctrl.TunnelService/Ps"
-	TunnelService_OpenFwd_FullMethodName  = "/ctrl.TunnelService/OpenFwd"
-	TunnelService_CloseFwd_FullMethodName = "/ctrl.TunnelService/CloseFwd"
+	TunnelService_Ps_FullMethodName           = "/ctrl.TunnelService/Ps"
+	TunnelService_OpenFwd_FullMethodName      = "/ctrl.TunnelService/OpenFwd"
+	TunnelService_CloseFwd_FullMethodName     = "/ctrl.TunnelService/CloseFwd"
+	TunnelService_CloseAllFwds_FullMethodName = "/ctrl.TunnelService/CloseAllFwds"
 )
 
 // TunnelServiceClient is the client API for TunnelService service.
@@ -31,6 +32,7 @@ type TunnelServiceClient interface {
 	Ps(ctx context.Context, in *PsRequest, opts ...grpc.CallOption) (*PsResponse, error)
 	OpenFwd(ctx context.Context, in *OpenRequest, opts ...grpc.CallOption) (*OpenResponse, error)
 	CloseFwd(ctx context.Context, in *CloseRequest, opts ...grpc.CallOption) (*CloseResponse, error)
+	CloseAllFwds(ctx context.Context, in *CloseAllRequest, opts ...grpc.CallOption) (*CloseAllResponse, error)
 }
 
 type tunnelServiceClient struct {
@@ -71,6 +73,16 @@ func (c *tunnelServiceClient) CloseFwd(ctx context.Context, in *CloseRequest, op
 	return out, nil
 }
 
+func (c *tunnelServiceClient) CloseAllFwds(ctx context.Context, in *CloseAllRequest, opts ...grpc.CallOption) (*CloseAllResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CloseAllResponse)
+	err := c.cc.Invoke(ctx, TunnelService_CloseAllFwds_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TunnelServiceServer is the server API for TunnelService service.
 // All implementations must embed UnimplementedTunnelServiceServer
 // for forward compatibility.
@@ -78,6 +90,7 @@ type TunnelServiceServer interface {
 	Ps(context.Context, *PsRequest) (*PsResponse, error)
 	OpenFwd(context.Context, *OpenRequest) (*OpenResponse, error)
 	CloseFwd(context.Context, *CloseRequest) (*CloseResponse, error)
+	CloseAllFwds(context.Context, *CloseAllRequest) (*CloseAllResponse, error)
 	mustEmbedUnimplementedTunnelServiceServer()
 }
 
@@ -96,6 +109,9 @@ func (UnimplementedTunnelServiceServer) OpenFwd(context.Context, *OpenRequest) (
 }
 func (UnimplementedTunnelServiceServer) CloseFwd(context.Context, *CloseRequest) (*CloseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CloseFwd not implemented")
+}
+func (UnimplementedTunnelServiceServer) CloseAllFwds(context.Context, *CloseAllRequest) (*CloseAllResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CloseAllFwds not implemented")
 }
 func (UnimplementedTunnelServiceServer) mustEmbedUnimplementedTunnelServiceServer() {}
 func (UnimplementedTunnelServiceServer) testEmbeddedByValue()                       {}
@@ -172,6 +188,24 @@ func _TunnelService_CloseFwd_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TunnelService_CloseAllFwds_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CloseAllRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TunnelServiceServer).CloseAllFwds(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TunnelService_CloseAllFwds_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TunnelServiceServer).CloseAllFwds(ctx, req.(*CloseAllRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TunnelService_ServiceDesc is the grpc.ServiceDesc for TunnelService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +224,10 @@ var TunnelService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CloseFwd",
 			Handler:    _TunnelService_CloseFwd_Handler,
+		},
+		{
+			MethodName: "CloseAllFwds",
+			Handler:    _TunnelService_CloseAllFwds_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

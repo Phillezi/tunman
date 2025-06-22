@@ -77,10 +77,11 @@ type Tunnel struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	User          string                 `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
-	Addr          string                 `protobuf:"bytes,3,opt,name=addr,proto3" json:"addr,omitempty"`
-	AddressPair   map[string]*AddrPair   `protobuf:"bytes,4,rep,name=address_pair,json=addressPair,proto3" json:"address_pair,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	Pw            string                 `protobuf:"bytes,5,opt,name=pw,proto3" json:"pw,omitempty"`
-	Privkey       []byte                 `protobuf:"bytes,6,opt,name=privkey,proto3" json:"privkey,omitempty"`
+	Host          string                 `protobuf:"bytes,3,opt,name=host,proto3" json:"host,omitempty"`
+	Port          uint32                 `protobuf:"varint,4,opt,name=port,proto3" json:"port,omitempty"`
+	AddressPair   map[string]*AddrPair   `protobuf:"bytes,5,rep,name=address_pair,json=addressPair,proto3" json:"address_pair,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Pw            string                 `protobuf:"bytes,6,opt,name=pw,proto3" json:"pw,omitempty"`
+	Privkey       []byte                 `protobuf:"bytes,7,opt,name=privkey,proto3" json:"privkey,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -129,11 +130,18 @@ func (x *Tunnel) GetUser() string {
 	return ""
 }
 
-func (x *Tunnel) GetAddr() string {
+func (x *Tunnel) GetHost() string {
 	if x != nil {
-		return x.Addr
+		return x.Host
 	}
 	return ""
+}
+
+func (x *Tunnel) GetPort() uint32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
 }
 
 func (x *Tunnel) GetAddressPair() map[string]*AddrPair {
@@ -505,6 +513,94 @@ func (x *CloseResponse) GetErrors() []string {
 	return nil
 }
 
+type CloseAllRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CloseAllRequest) Reset() {
+	*x = CloseAllRequest{}
+	mi := &file_ctrl_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CloseAllRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CloseAllRequest) ProtoMessage() {}
+
+func (x *CloseAllRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ctrl_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CloseAllRequest.ProtoReflect.Descriptor instead.
+func (*CloseAllRequest) Descriptor() ([]byte, []int) {
+	return file_ctrl_proto_rawDescGZIP(), []int{9}
+}
+
+type CloseAllResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ok            bool                   `protobuf:"varint,1,opt,name=ok,proto3" json:"ok,omitempty"`
+	Error         string                 `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CloseAllResponse) Reset() {
+	*x = CloseAllResponse{}
+	mi := &file_ctrl_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CloseAllResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CloseAllResponse) ProtoMessage() {}
+
+func (x *CloseAllResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ctrl_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CloseAllResponse.ProtoReflect.Descriptor instead.
+func (*CloseAllResponse) Descriptor() ([]byte, []int) {
+	return file_ctrl_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *CloseAllResponse) GetOk() bool {
+	if x != nil {
+		return x.Ok
+	}
+	return false
+}
+
+func (x *CloseAllResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
 var File_ctrl_proto protoreflect.FileDescriptor
 
 const file_ctrl_proto_rawDesc = "" +
@@ -515,14 +611,15 @@ const file_ctrl_proto_rawDesc = "" +
 	"\tlocalAddr\x18\x01 \x01(\tR\tlocalAddr\x12\x1e\n" +
 	"\n" +
 	"remoteAddr\x18\x02 \x01(\tR\n" +
-	"remoteAddr\"\xfc\x01\n" +
+	"remoteAddr\"\x90\x02\n" +
 	"\x06Tunnel\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04user\x18\x02 \x01(\tR\x04user\x12\x12\n" +
-	"\x04addr\x18\x03 \x01(\tR\x04addr\x12@\n" +
-	"\faddress_pair\x18\x04 \x03(\v2\x1d.ctrl.Tunnel.AddressPairEntryR\vaddressPair\x12\x0e\n" +
-	"\x02pw\x18\x05 \x01(\tR\x02pw\x12\x18\n" +
-	"\aprivkey\x18\x06 \x01(\fR\aprivkey\x1aN\n" +
+	"\x04host\x18\x03 \x01(\tR\x04host\x12\x12\n" +
+	"\x04port\x18\x04 \x01(\rR\x04port\x12@\n" +
+	"\faddress_pair\x18\x05 \x03(\v2\x1d.ctrl.Tunnel.AddressPairEntryR\vaddressPair\x12\x0e\n" +
+	"\x02pw\x18\x06 \x01(\tR\x02pw\x12\x18\n" +
+	"\aprivkey\x18\a \x01(\fR\aprivkey\x1aN\n" +
 	"\x10AddressPairEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12$\n" +
 	"\x05value\x18\x02 \x01(\v2\x0e.ctrl.AddrPairR\x05value:\x028\x01\"a\n" +
@@ -547,11 +644,16 @@ const file_ctrl_proto_rawDesc = "" +
 	"\rCloseResponse\x12\x1d\n" +
 	"\n" +
 	"closed_ids\x18\x01 \x03(\tR\tclosedIds\x12\x16\n" +
-	"\x06errors\x18\x02 \x03(\tR\x06errors2\x9f\x01\n" +
+	"\x06errors\x18\x02 \x03(\tR\x06errors\"\x11\n" +
+	"\x0fCloseAllRequest\"8\n" +
+	"\x10CloseAllResponse\x12\x0e\n" +
+	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x14\n" +
+	"\x05error\x18\x02 \x01(\tR\x05error2\xde\x01\n" +
 	"\rTunnelService\x12'\n" +
 	"\x02Ps\x12\x0f.ctrl.PsRequest\x1a\x10.ctrl.PsResponse\x120\n" +
 	"\aOpenFwd\x12\x11.ctrl.OpenRequest\x1a\x12.ctrl.OpenResponse\x123\n" +
-	"\bCloseFwd\x12\x12.ctrl.CloseRequest\x1a\x13.ctrl.CloseResponseB\x10Z\x0e./proto;ctrlpbb\x06proto3"
+	"\bCloseFwd\x12\x12.ctrl.CloseRequest\x1a\x13.ctrl.CloseResponse\x12=\n" +
+	"\fCloseAllFwds\x12\x15.ctrl.CloseAllRequest\x1a\x16.ctrl.CloseAllResponseB\x10Z\x0e./proto;ctrlpbb\x06proto3"
 
 var (
 	file_ctrl_proto_rawDescOnce sync.Once
@@ -565,37 +667,41 @@ func file_ctrl_proto_rawDescGZIP() []byte {
 	return file_ctrl_proto_rawDescData
 }
 
-var file_ctrl_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_ctrl_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_ctrl_proto_goTypes = []any{
-	(*AddrPair)(nil),      // 0: ctrl.AddrPair
-	(*Tunnel)(nil),        // 1: ctrl.Tunnel
-	(*Fwd)(nil),           // 2: ctrl.Fwd
-	(*PsRequest)(nil),     // 3: ctrl.PsRequest
-	(*PsResponse)(nil),    // 4: ctrl.PsResponse
-	(*OpenRequest)(nil),   // 5: ctrl.OpenRequest
-	(*OpenResponse)(nil),  // 6: ctrl.OpenResponse
-	(*CloseRequest)(nil),  // 7: ctrl.CloseRequest
-	(*CloseResponse)(nil), // 8: ctrl.CloseResponse
-	nil,                   // 9: ctrl.Tunnel.AddressPairEntry
+	(*AddrPair)(nil),         // 0: ctrl.AddrPair
+	(*Tunnel)(nil),           // 1: ctrl.Tunnel
+	(*Fwd)(nil),              // 2: ctrl.Fwd
+	(*PsRequest)(nil),        // 3: ctrl.PsRequest
+	(*PsResponse)(nil),       // 4: ctrl.PsResponse
+	(*OpenRequest)(nil),      // 5: ctrl.OpenRequest
+	(*OpenResponse)(nil),     // 6: ctrl.OpenResponse
+	(*CloseRequest)(nil),     // 7: ctrl.CloseRequest
+	(*CloseResponse)(nil),    // 8: ctrl.CloseResponse
+	(*CloseAllRequest)(nil),  // 9: ctrl.CloseAllRequest
+	(*CloseAllResponse)(nil), // 10: ctrl.CloseAllResponse
+	nil,                      // 11: ctrl.Tunnel.AddressPairEntry
 }
 var file_ctrl_proto_depIdxs = []int32{
-	9, // 0: ctrl.Tunnel.address_pair:type_name -> ctrl.Tunnel.AddressPairEntry
-	1, // 1: ctrl.Fwd.parent:type_name -> ctrl.Tunnel
-	0, // 2: ctrl.Fwd.addrs:type_name -> ctrl.AddrPair
-	2, // 3: ctrl.PsResponse.fwds:type_name -> ctrl.Fwd
-	1, // 4: ctrl.OpenRequest.tunnels:type_name -> ctrl.Tunnel
-	0, // 5: ctrl.Tunnel.AddressPairEntry.value:type_name -> ctrl.AddrPair
-	3, // 6: ctrl.TunnelService.Ps:input_type -> ctrl.PsRequest
-	5, // 7: ctrl.TunnelService.OpenFwd:input_type -> ctrl.OpenRequest
-	7, // 8: ctrl.TunnelService.CloseFwd:input_type -> ctrl.CloseRequest
-	4, // 9: ctrl.TunnelService.Ps:output_type -> ctrl.PsResponse
-	6, // 10: ctrl.TunnelService.OpenFwd:output_type -> ctrl.OpenResponse
-	8, // 11: ctrl.TunnelService.CloseFwd:output_type -> ctrl.CloseResponse
-	9, // [9:12] is the sub-list for method output_type
-	6, // [6:9] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	11, // 0: ctrl.Tunnel.address_pair:type_name -> ctrl.Tunnel.AddressPairEntry
+	1,  // 1: ctrl.Fwd.parent:type_name -> ctrl.Tunnel
+	0,  // 2: ctrl.Fwd.addrs:type_name -> ctrl.AddrPair
+	2,  // 3: ctrl.PsResponse.fwds:type_name -> ctrl.Fwd
+	1,  // 4: ctrl.OpenRequest.tunnels:type_name -> ctrl.Tunnel
+	0,  // 5: ctrl.Tunnel.AddressPairEntry.value:type_name -> ctrl.AddrPair
+	3,  // 6: ctrl.TunnelService.Ps:input_type -> ctrl.PsRequest
+	5,  // 7: ctrl.TunnelService.OpenFwd:input_type -> ctrl.OpenRequest
+	7,  // 8: ctrl.TunnelService.CloseFwd:input_type -> ctrl.CloseRequest
+	9,  // 9: ctrl.TunnelService.CloseAllFwds:input_type -> ctrl.CloseAllRequest
+	4,  // 10: ctrl.TunnelService.Ps:output_type -> ctrl.PsResponse
+	6,  // 11: ctrl.TunnelService.OpenFwd:output_type -> ctrl.OpenResponse
+	8,  // 12: ctrl.TunnelService.CloseFwd:output_type -> ctrl.CloseResponse
+	10, // 13: ctrl.TunnelService.CloseAllFwds:output_type -> ctrl.CloseAllResponse
+	10, // [10:14] is the sub-list for method output_type
+	6,  // [6:10] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_ctrl_proto_init() }
@@ -609,7 +715,7 @@ func file_ctrl_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ctrl_proto_rawDesc), len(file_ctrl_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -7,6 +7,7 @@ import (
 	"github.com/Phillezi/tunman-remaster/interrupt"
 	ctrlpb "github.com/Phillezi/tunman-remaster/proto"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
@@ -16,21 +17,35 @@ var closeCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if conn := connection.C(); conn != nil {
-			resp, err := conn.CloseFwd(interrupt.GetInstance().Context(), &ctrlpb.CloseRequest{
-				Ids: args,
-			})
-			if err != nil {
-				zap.L().Error("failed to execute close command", zap.Error(err))
-				return
-			}
-			if len(resp.Errors) > 0 {
-				for _, err := range resp.Errors {
-					zap.L().Error("error occurred when closing tunnel", zap.Error(fmt.Errorf("%s", err)))
+			if !viper.GetBool("all") && args[0] != "all" {
+				resp, err := conn.CloseFwd(interrupt.GetInstance().Context(), &ctrlpb.CloseRequest{
+					Ids: args,
+				})
+				if err != nil {
+					zap.L().Error("failed to execute close command", zap.Error(err))
+					return
 				}
-				return
-			}
-			for _, id := range resp.ClosedIds {
-				fmt.Println(id)
+				if len(resp.Errors) > 0 {
+					for _, err := range resp.Errors {
+						zap.L().Error("error occurred when closing tunnel", zap.Error(fmt.Errorf("%s", err)))
+					}
+					return
+				}
+				for _, id := range resp.ClosedIds {
+					fmt.Println(id)
+				}
+			} else {
+				resp, err := conn.CloseAllFwds(interrupt.GetInstance().Context(), &ctrlpb.CloseAllRequest{})
+				if err != nil {
+					zap.L().Error("failed to execute close all command", zap.Error(err))
+					return
+				}
+				if resp.Error != "" {
+					zap.L().Error("error occurred when closing all tunnels", zap.Error(fmt.Errorf("%s", resp.Error)))
+					return
+				} else if resp.Ok {
+					fmt.Println("all tunnels were closed")
+				}
 			}
 		}
 	},
@@ -38,4 +53,7 @@ var closeCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(closeCmd)
+
+	closeCmd.Flags().BoolP("all", "a", false, "Close all tunnels")
+	viper.BindPFlag("all", closeCmd.Flags().Lookup("all"))
 }

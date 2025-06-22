@@ -12,11 +12,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Phillezi/tunman-remaster/interrupt"
 	"github.com/Phillezi/tunman-remaster/pkg/ser"
 	sshutils "github.com/Phillezi/tunman-remaster/pkg/ssh"
 	ctrlpb "github.com/Phillezi/tunman-remaster/proto"
 	"github.com/Phillezi/tunman-remaster/utils"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/ssh"
 )
@@ -135,50 +135,27 @@ func (t *Tunnel) Proto() *ctrlpb.Tunnel {
 	return &ctrlpb.Tunnel{
 		Id:          t.Hash(),
 		User:        t.uID.User,
-		Addr:        t.uID.Addr,
+		Host:        t.uID.Host,
+		Port:        uint32(t.uID.Port),
 		AddressPair: AddrPairToProto(t.conns),
 	}
 }
 
 type ConnOpts struct {
 	User string
-	Addr string
+	Host string
+	Port uint
+	addr string
 	Opts []ConfigOption
 }
 
 // New creates a new SSH tunnel to host (user@addr).
-func New(user, addr string, opts ...ConfigOption) (*Tunnel, error) {
-	authMethod, err := sshutils.GetSSHAgentAuth()
-	if err != nil {
-		zap.L().Warn("Could not get ssh agent auth", zap.Error(err))
-		//return nil, err
-	}
-
-	hostKeyCallback, err := sshutils.GetHostKeyCallback()
-	if err != nil {
-		zap.L().Warn("could not get hostkey callback", zap.Error(err))
-		if !viper.GetBool("insecure") && !viper.GetBool("insecure-skip-hostkey-callback") {
-			return nil, err
-		}
-	}
+func New(user, host string, port uint, opts ...ConfigOption) (*Tunnel, error) {
 
 	fallbackCtx, fallbackCancel := context.WithCancel(context.Background())
 	cfg := &TunnelOpts{
 		ClientConfig: ssh.ClientConfig{
 			User: user,
-			HostKeyCallback: func() ssh.HostKeyCallback {
-				if hostKeyCallback != nil {
-					return hostKeyCallback
-				}
-				return ssh.InsecureIgnoreHostKey()
-			}(),
-			Timeout: 10 * time.Second,
-			Auth: func() []ssh.AuthMethod {
-				if authMethod != nil {
-					return []ssh.AuthMethod{authMethod}
-				}
-				return nil
-			}(),
 		},
 		ctx:    fallbackCtx,
 		cancel: fallbackCancel,
@@ -190,7 +167,11 @@ func New(user, addr string, opts ...ConfigOption) (*Tunnel, error) {
 		}
 	}
 
-	client, err := ssh.Dial("tcp", addr, &cfg.ClientConfig)
+	client, err := sshutils.DialWithJumpChain(&sshutils.Target{
+		User: user,
+		Host: host,
+		Port: port,
+	}, &cfg.ClientConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -201,15 +182,27 @@ func New(user, addr string, opts ...ConfigOption) (*Tunnel, error) {
 		client: client,
 		uID: &ConnOpts{
 			User: user,
-			Addr: addr,
+			Host: host,
+			Port: port,
+			addr: client.Conn.RemoteAddr().String(),
 		},
 		conns: make(map[string]*FwdConn),
 	}, nil
 }
 
 func (o *ConnOpts) Hash() string {
+	if o.addr == "" {
+		addr, err := sshutils.Resolve(&sshutils.Target{User: o.User, Host: o.Host, Port: o.Port})
+		if err != nil {
+			zap.L().Error("failed to resolve addr for hashing", zap.Error(err))
+			// fallback
+			o.addr = fmt.Sprintf("%s:%d", utils.Or(o.Host, "0.0.0.0"), utils.Or(o.Port, 22))
+		} else {
+			o.addr = addr
+		}
+	}
 	h := fnv.New64a()
-	h.Write([]byte(o.User + o.Addr))
+	h.Write([]byte(o.User + o.addr))
 	return strconv.FormatUint(h.Sum64(), 16) // 16 hex chars
 }
 
@@ -239,15 +232,39 @@ func (t *Tunnel) Dial(network, addr string) (net.Conn, error) {
 	return conn, nil
 }
 
+// DialWCtx opens a connection through the tunnel to the target (e.g., localhost:3306).
+func (t *Tunnel) DialWCtx(ctx context.Context, network, addr string) (net.Conn, error) {
+	if t.client == nil {
+		return nil, errors.New("ssh client not connected")
+	}
+	conn, err := t.client.DialContext(ctx, network, addr)
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
+}
+
 // Close shuts down the SSH tunnel.
 func (t *Tunnel) Close() error {
 	if t.cancel != nil {
 		t.cancel()
 	}
+
+	t.connMu.RLock()
+	for id, c := range t.conns {
+		// we need to call cancel to close all conns,
+		// since this cancel func closes the listener
+		// otherwise the go func is blocked listening
+		// and will not recv the ctx cancel : /
+		c.Cancel()
+		zap.L().Debug("cancelled fwd", zap.String("id", id))
+	}
+	t.connMu.RUnlock()
+
 	if t.client != nil {
 		return t.client.Close()
 	}
-	<-t.ctx.Done()
+
 	return nil
 }
 
@@ -281,27 +298,42 @@ func (t *Tunnel) CloseFwd(ids ...string) ([]string, []string) {
 // Forward listens on localAddr (e.g. "localhost:8080") and forwards all connections
 // to remoteAddr (e.g. "localhost:5432") through the SSH tunnel.
 func (t *Tunnel) Forward(ap AddressPair) error {
+	id := ap.Hash()
+	defer zap.L().Debug("Forward exited", zap.String("id", id))
+	var once sync.Once
+
 	listener, err := net.Listen("tcp", ap.LocalAddr)
 	if err != nil {
 		return fmt.Errorf("listen error: %w", err)
 	}
-	defer listener.Close()
-
-	id := ap.Hash()
-
 	ctx, cancel := context.WithCancel(t.ctx)
-	defer cancel()
+	defer once.Do(func() {
+		listener.Close()
+		cancel()
+	})
 
 	t.connMu.Lock()
 	t.conns[id] = &FwdConn{AddrPair: ap, Cancel: func() {
-		listener.Close()
-		cancel()
+		once.Do(func() {
+			listener.Close()
+			cancel()
+		})
 	}}
 	t.connMu.Unlock()
 	defer func() {
-		t.connMu.Lock()
-		delete(t.conns, id)
-		t.connMu.Unlock()
+		go func() {
+			ctxx, ccancel := context.WithTimeout(interrupt.GetInstance().Context(), 10*time.Second)
+			defer ccancel()
+			select {
+			case <-ctxx.Done():
+				zap.L().Warn("timed out when trying to remove fwd on exit from fwds in tunnel", zap.String("id", id))
+			default:
+				t.connMu.Lock()
+				defer t.connMu.Unlock()
+				delete(t.conns, id)
+				zap.L().Debug("succesfully removed fwd from fwds in tunnel", zap.String("id", id))
+			}
+		}()
 	}()
 
 	zap.L().Info("Forwarding", zap.String("id", id), zap.String("local", ap.LocalAddr), zap.String("remote", ap.RemoteAddr))
@@ -330,9 +362,10 @@ func (t *Tunnel) Forward(ap AddressPair) error {
 }
 
 func (t *Tunnel) handleForwardConn(ctx context.Context, localConn net.Conn, remoteAddr string) {
+	defer zap.L().Debug("handleForwardConn exited")
 	defer localConn.Close()
 
-	remoteConn, err := t.Dial("tcp", remoteAddr)
+	remoteConn, err := t.DialWCtx(ctx, "tcp", remoteAddr)
 	if err != nil {
 		zap.L().Error("SSH dial failed", zap.Error(err))
 		return
@@ -341,6 +374,7 @@ func (t *Tunnel) handleForwardConn(ctx context.Context, localConn net.Conn, remo
 
 	go func() {
 		<-ctx.Done()
+		zap.L().Debug("handleForwardConn recv ctx cancelled")
 		localConn.Close()
 		remoteConn.Close()
 	}()

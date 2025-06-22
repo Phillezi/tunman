@@ -50,7 +50,7 @@ func (m *Manager) findOrCreate(remote tunnel.ConnOpts) (*WTunnel, error) {
 	m.mu.RUnlock()
 
 	tunCtx, tunCan := context.WithCancel(m.ctx)
-	tun, err := tunnel.New(remote.User, remote.Addr, append(remote.Opts, tunnel.WithContext(tunCtx))...)
+	tun, err := tunnel.New(remote.User, remote.Host, remote.Port, append(remote.Opts, tunnel.WithContext(tunCtx))...)
 	if err != nil {
 		tunCan()
 		return nil, err
@@ -109,7 +109,8 @@ func (m *Manager) OpenFwd(_ context.Context, req *ctrlpb.OpenRequest) (*ctrlpb.O
 
 		remote := tunnel.ConnOpts{
 			User: tf.User,
-			Addr: tf.Addr,
+			Host: tf.Host,
+			Port: uint(tf.Port),
 			Opts: tunnel.WithProtoOpts(tf.Pw, tf.Privkey),
 		}
 
@@ -164,4 +165,18 @@ func (m *Manager) CloseFwd(_ context.Context, req *ctrlpb.CloseRequest) (*ctrlpb
 		}
 	}
 	return &ctrlpb.CloseResponse{ClosedIds: closed, Errors: errors}, nil
+}
+
+func (m *Manager) CloseAllFwds(context.Context, *ctrlpb.CloseAllRequest) (*ctrlpb.CloseAllResponse, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if len(m.tunnels) > 0 {
+		for id, tun := range m.tunnels {
+			tun.Close()
+			zap.L().Info("closed tunnel", zap.String("id", id))
+		}
+		m.tunnels = make(map[string]*WTunnel)
+		return &ctrlpb.CloseAllResponse{Ok: true, Error: ""}, nil
+	}
+	return &ctrlpb.CloseAllResponse{Ok: false, Error: "No open tunnels"}, nil
 }
