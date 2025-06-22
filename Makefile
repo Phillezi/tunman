@@ -48,6 +48,7 @@ docs:
 install-user-service: install
 	@echo "Installing user-level systemd service..."
 	@mkdir -p ~/.config/systemd/user
+	@mkdir -p ~/.config/tunman
 	@cp $(SERVICE_TEMPLATE_DIR)/systemd/tunmand.service ~/.config/systemd/user/tunmand.service
 	@systemctl --user daemon-reexec || true
 	@systemctl --user daemon-reload
