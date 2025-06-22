@@ -104,8 +104,11 @@ install_binary() {
   local SUDO=""
   [ "$(is_root)" = "false" ] && SUDO="sudo"
   $SUDO mkdir -p "$INSTALL_DIR"
-  $SUDO mv "/tmp/${BINARY_NAME}_${OS}_${ARCH}" "$INSTALL_DIR/$BINARY_NAME"
+  $SUDO mv "/tmp/${BINARY_NAME}/${BINARY_NAME}_${OS}_${ARCH}" "$INSTALL_DIR/$BINARY_NAME"
   $SUDO chmod +x "$INSTALL_DIR/$BINARY_NAME"
+
+  rm -f "$TMP_TAR"
+  rm -rf "/tmp/${BINARY_NAME}"
 
   log_info "$BINARY_NAME installed successfully to $INSTALL_DIR"
 }
