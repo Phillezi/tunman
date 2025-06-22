@@ -14,9 +14,22 @@ import (
 )
 
 var openCmd = &cobra.Command{
-	Use:   "open [host]",
-	Short: "Open a tunnel to a remote host",
-	Args:  cobra.MinimumNArgs(1),
+	Use:   "open [target]",
+	Short: "Open a tunnel to a remote target",
+	Long: `The open command allows you to open a single or multiple tunnels to a specified ssh target. 
+This target can be specified using the familiar syntax of ssh (<user>@<host>:<port>) with a combination of flags, for example --user or --port, 
+things specified with flags take priority. You can also refer to custom hosts specified within your ssh config file (~/.ssh/config),
+this config will be read and parsed to open the ssh connection, it even works with proxy-jumps.
+
+Specifying ports to "publish" takes inspiration from how it is done within the docker cli, using -p or --publish per pair you want to publish and ":" as a delimiter.
+Bind addresses are optionally specified, if omitted they default to 0.0.0.0.`,
+	Example: `tunman open testserver -p 8080:8080 -p 9090:7070 -p 5050:10.0.12.1:5050 -p localhost:4040:4040
+# The command above will look up testserver in the users (the user running the daemon) ~/.ssh/config and open a tunnel
+# it will then forward the published port address combinations that are specified
+
+tunman open root@localhost:2222 -p 8080:8090
+# The command above will open a tunnel and forward port 8090 inside the ssh host to 8080 of the host running the command.`,
+	Args: cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		u, h, p := parser.ParseTargetLoose(args[0])
 		host := h

@@ -1,0 +1,16 @@
+[Unit]
+Description=Tunmand Daemon
+After=network.target
+
+[Service]
+ExecStart=%h/.local/bin/tunmand
+Restart=on-failure
+RestartSec=2
+Environment=PATH=%h/.local/bin:/usr/bin:/bin
+WorkingDirectory=%h/.config/tunman
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

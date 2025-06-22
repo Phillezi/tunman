@@ -7,6 +7,7 @@ import (
 	"hash/fnv"
 	"io"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -19,6 +20,7 @@ import (
 	"github.com/Phillezi/tunman-remaster/utils"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
 )
 
 type AddressPair struct {
@@ -120,14 +122,45 @@ func WithPrivateKey(key []byte) ConfigOption {
 	}
 }
 
+// WithAuthSocket returns an option to authenticate using the SSH agent (SSH_AUTH_SOCK).
+func WithAuthSocket() ConfigOption {
+	return func(cfg *TunnelOpts) error {
+		sock := os.Getenv("SSH_AUTH_SOCK")
+		if sock == "" {
+			return fmt.Errorf("SSH_AUTH_SOCK not set, cannot use agent authentication")
+		}
+
+		conn, err := net.Dial("unix", sock)
+		if err != nil {
+			return fmt.Errorf("failed to connect to SSH agent: %w", err)
+		}
+
+		agentClient := ssh.PublicKeysCallback(agent.NewClient(conn).Signers)
+		if len(cfg.Auth) == 0 {
+			cfg.Auth = []ssh.AuthMethod{agentClient}
+		} else {
+			cfg.Auth = utils.Prepend(cfg.Auth, agentClient)
+		}
+
+		return nil
+	}
+}
+
 func WithProtoOpts(pw string, key []byte) []ConfigOption {
 	var opts = []ConfigOption{}
+	var addAuthSockUse bool = true
 	if pw != "" {
 		opts = append(opts, WithPassword(pw))
+		addAuthSockUse = false
 	}
 	if len(key) > 0 {
 		opts = append(opts, WithPrivateKey(key))
+		addAuthSockUse = false
 	}
+	if addAuthSockUse {
+		opts = append(opts, WithAuthSocket())
+	}
+
 	return opts
 }
 

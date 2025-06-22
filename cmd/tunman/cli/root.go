@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"github.com/Phillezi/tunman-remaster/config"
 	"github.com/Phillezi/tunman-remaster/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -21,7 +22,7 @@ _/  |_ __ __  ____   _____ _____    ____
 }
 
 func init() {
-	cobra.OnInitialize()
+	cobra.OnInitialize(func() { config.InitConfig("tunman") })
 
 	rootCmd.PersistentFlags().String("loglevel", "info", "Set the logging level (info, warn, error, debug)")
 	viper.BindPFlag("loglevel", rootCmd.PersistentFlags().Lookup("loglevel"))
@@ -35,4 +36,8 @@ func init() {
 
 func ExecuteE() error {
 	return rootCmd.Execute()
+}
+
+func GetRootCMD() *cobra.Command {
+	return rootCmd
 }

@@ -5,7 +5,9 @@ import (
 	_ "net/http/pprof"
 	"time"
 
+	"github.com/Phillezi/tunman-remaster/config"
 	"github.com/Phillezi/tunman-remaster/internal/defaults"
+	"github.com/Phillezi/tunman-remaster/internal/lock"
 	"github.com/Phillezi/tunman-remaster/interrupt"
 	"github.com/Phillezi/tunman-remaster/log"
 	"github.com/Phillezi/tunman-remaster/pkg/controller"
@@ -24,6 +26,9 @@ var rootCmd = &cobra.Command{
 	},
 	Long: tundmand,
 	Run: func(cmd *cobra.Command, args []string) {
+		lock.Acquire()
+		defer lock.Release()
+
 		startLog()
 		zap.L().Debug("start")
 		defer interrupt.GetInstance().Shutdown()
@@ -53,7 +58,7 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	cobra.OnInitialize()
+	cobra.OnInitialize(func() { config.InitConfig("tunmand") })
 
 	rootCmd.PersistentFlags().String("loglevel", "info", "Set the logging level (info, warn, error, debug)")
 	viper.BindPFlag("loglevel", rootCmd.PersistentFlags().Lookup("loglevel"))
@@ -76,4 +81,8 @@ func init() {
 
 func ExecuteE() error {
 	return rootCmd.Execute()
+}
+
+func GetRootCMD() *cobra.Command {
+	return rootCmd
 }

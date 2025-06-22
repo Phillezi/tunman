@@ -13,8 +13,22 @@ import (
 
 var closeCmd = &cobra.Command{
 	Use:   "close [ids...]",
-	Short: "Close a tunnels",
-	Args:  cobra.MinimumNArgs(1),
+	Short: "Close a tunnel or multiple tunnels by ID or all",
+	Long: `The close command is used to terminate active tunnels previously opened by the daemon.
+You can close a specific tunnel or multiple tunnels by providing their IDs as arguments. These IDs are printed to stdout when a tunnel is opened.
+
+If you want to close **all** tunnels at once, you can either use the --all flag or pass "all" as the only argument.
+
+Note: Closing all tunnels using the "all" keyword or the --all flag will terminate every active tunnel managed by the daemon.`,
+	Example: `tunman close MTdlOTk3NTE4YzVhZTRjYw.YmJlZTA1MzNiOTMwMzEwNQ
+# The command above will close the tunnel with the given ID
+
+tunman close MTdlOTk3NTE4YzVhZTRjYw.YmJlZTA1MzNiOTMwMzEwNQ a8e5ccf5-b56c-4e94-89c3-28908912ecfc
+# The command above will close multiple tunnels by their IDs
+
+tunman close all
+# This will close all tunnels`,
+	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if conn := connection.C(); conn != nil {
 			if !viper.GetBool("all") && args[0] != "all" {

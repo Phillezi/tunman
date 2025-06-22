@@ -5,7 +5,7 @@ BUILD_DIR=bin
 EXT=$(if $(filter windows,$(GOOS)),.exe,)
 
 # Targets
-.PHONY: all proto build/* test release install clean lint
+.PHONY: all proto build/* test release install clean lint docs
 
 all: build/$(CLI_BINARY_NAME) build/$(DAEMON_BINARY_NAME)
 
@@ -39,3 +39,6 @@ clean:
 
 lint:
 	@./scripts/check-lint.sh
+
+docs:
+	@go run ./cmd/docs
