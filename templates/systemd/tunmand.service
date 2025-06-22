@@ -3,10 +3,10 @@ Description=Tunmand Daemon
 After=network.target
 
 [Service]
-ExecStart=%h/.local/bin/tunmand
+ExecStart=/usr/local/bin/tunmand
 Restart=on-failure
 RestartSec=2
-Environment=PATH=%h/.local/bin:/usr/bin:/bin
+Environment=PATH=/usr/local/bin/:%h/.local/bin:/usr/bin:/bin
 WorkingDirectory=%h/.config/tunman
 
 StandardOutput=journal
