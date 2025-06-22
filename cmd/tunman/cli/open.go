@@ -29,7 +29,7 @@ var openCmd = &cobra.Command{
 		cfg := ssh.Resolve(host)
 
 		if cfg.UseAgent {
-			zap.L().Warn("using ssh agent is not impl yet")
+			//zap.L().Warn("using ssh agent is not impl yet")
 		}
 
 		if conn := connection.C(); conn != nil {

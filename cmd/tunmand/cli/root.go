@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"net/http"
+	_ "net/http/pprof"
 	"time"
 
 	"github.com/Phillezi/tunman-remaster/internal/defaults"
@@ -25,6 +27,16 @@ var rootCmd = &cobra.Command{
 		startLog()
 		zap.L().Debug("start")
 		defer interrupt.GetInstance().Shutdown()
+
+		if viper.GetBool("pprof") {
+			go func() {
+				// Start pprof server on localhost:6060
+				zap.L().Info("starting pprof server on localhost:6060")
+				if err := http.ListenAndServe("localhost:6060", nil); err != nil {
+					zap.L().Error("pprof server error", zap.Error(err))
+				}
+			}()
+		}
 
 		man := manager.New()
 		interrupt.GetInstance().AddShutdownHook(func() { zap.L().Info("manager shutdown"); man.Shutdown() })
@@ -54,6 +66,9 @@ func init() {
 
 	rootCmd.PersistentFlags().Bool("insecure", false, "Dont validate against known_hosts")
 	viper.BindPFlag("insecure", rootCmd.PersistentFlags().Lookup("insecure"))
+
+	rootCmd.PersistentFlags().Bool("pprof", false, "Enable pprof profiling HTTP server")
+	viper.BindPFlag("pprof", rootCmd.PersistentFlags().Lookup("pprof"))
 }
 
 func ExecuteE() error {

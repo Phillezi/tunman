@@ -262,6 +262,7 @@ func (t *Tunnel) Close() error {
 	t.connMu.RUnlock()
 
 	if t.client != nil {
+		defer func() { t.client.Wait(); zap.L().Debug("ssh client closed"); t.client = nil }()
 		return t.client.Close()
 	}
 
@@ -362,7 +363,7 @@ func (t *Tunnel) Forward(ap AddressPair) error {
 }
 
 func (t *Tunnel) handleForwardConn(ctx context.Context, localConn net.Conn, remoteAddr string) {
-	defer zap.L().Debug("handleForwardConn exited")
+	//defer zap.L().Debug("handleForwardConn exited")
 	defer localConn.Close()
 
 	remoteConn, err := t.DialWCtx(ctx, "tcp", remoteAddr)
