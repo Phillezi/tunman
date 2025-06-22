@@ -34,7 +34,7 @@ tunman open root@localhost:2222 -p 8080:8090
 		u, h, p := parser.ParseTargetLoose(args[0])
 		host := h
 		port := utils.Or(viper.GetString("port"), p)
-		userVal := utils.Or(viper.GetString("user"), u)
+		userVal := utils.Or(viper.GetString("uservalue"), u)
 		pw := viper.GetString("password")
 
 		localRemoteMap, err := parser.ParsePublishes(viper.GetStringSlice("publish"))
@@ -80,13 +80,17 @@ tunman open root@localhost:2222 -p 8080:8090
 }
 
 func init() {
-	flags := openCmd.Flags()
-	flags.String("user", "", "SSH username (fallback to ~/.ssh/config)")
-	flags.StringP("port", "P", "", "SSH port (default 22 or from ~/.ssh/config)")
-	flags.String("password", "", "SSH password")
-	flags.StringSliceP("publish", "p", nil, "Publish forwards, syntax <local-addr>:<local-port>:<remote-addr>:<local-port>, if \"<local-addr>:\" or \"<remote-addr>:\" is omitted then 0.0.0.0 will be used")
+	openCmd.Flags().StringP("user", "u", "", "SSH username")
+	viper.BindPFlag("userval", openCmd.Flags().Lookup("user"))
 
-	_ = viper.BindPFlags(flags)
+	openCmd.Flags().StringP("port", "P", "", "SSH port")
+	viper.BindPFlag("port", openCmd.Flags().Lookup("port"))
+
+	openCmd.Flags().String("password", "", "SSH password")
+	viper.BindPFlag("password", openCmd.Flags().Lookup("password"))
+
+	openCmd.Flags().StringSliceP("publish", "p", nil, "Publish forwards, syntax <local-addr>:<local-port>:<remote-addr>:<local-port>, if \"<local-addr>:\" or \"<remote-addr>:\" is omitted then 0.0.0.0 will be used")
+	viper.BindPFlag("publish", openCmd.Flags().Lookup("publish"))
 
 	rootCmd.AddCommand(openCmd)
 }

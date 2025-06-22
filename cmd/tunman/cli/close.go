@@ -23,7 +23,7 @@ Note: Closing all tunnels using the "all" keyword or the --all flag will termina
 	Example: `tunman close MTdlOTk3NTE4YzVhZTRjYw.YmJlZTA1MzNiOTMwMzEwNQ
 # The command above will close the tunnel with the given ID
 
-tunman close MTdlOTk3NTE4YzVhZTRjYw.YmJlZTA1MzNiOTMwMzEwNQ a8e5ccf5-b56c-4e94-89c3-28908912ecfc
+tunman close MTdlOTk3NTE4YzVhZTRjYw.YmJlZTA1MzNiOTMwMzEwNQ ODE4ZmY5ODlmYWE5ZTIwOA.YzdjMWMyZDc2ODhiOWJkZA
 # The command above will close multiple tunnels by their IDs
 
 tunman close all

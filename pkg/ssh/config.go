@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Phillezi/tunman-remaster/utils"
 	"github.com/kevinburke/ssh_config"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -80,13 +81,14 @@ func getSSHClientConfig(target *Target, cfgs ...*ssh.ClientConfig) (*ssh.ClientC
 		zap.L().Error("error retrieving IdentityFile", zap.Error(err))
 	}
 	if keyFile != "" {
+		keyFile = utils.EvalPath(keyFile)
 		if _, err := os.Stat(keyFile); err == nil {
 			if pk, err := loadPrivateKey(keyFile); err == nil {
 				authOpts = append(authOpts, ssh.PublicKeys(pk))
 			} else {
 				return nil, fmt.Errorf("failed to load private key: %w", err)
 			}
-		} else if keyFile != ssh_config.Default("IdentityFile") {
+		} else if keyFile != utils.EvalPath(ssh_config.Default("IdentityFile")) {
 			zap.L().Warn("specified IdentityFile does not exist", zap.String("keyFile", keyFile))
 		}
 	}
@@ -131,4 +133,18 @@ func loadPrivateKey(keyPath string) (ssh.Signer, error) {
 	}
 
 	return privateKey, nil
+}
+
+func loadPublicKey(keyPath string) (ssh.PublicKey, error) {
+	key, err := os.ReadFile(keyPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read private key file: %v", err)
+	}
+
+	publicKey, err := ssh.ParsePublicKey(key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse private key: %v", err)
+	}
+
+	return publicKey, nil
 }

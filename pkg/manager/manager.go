@@ -56,14 +56,16 @@ func New() *Manager {
 		zap.L().Info("loaded state in", zap.Duration("loadTime", end.Sub(start)))
 
 		for _, fwd := range fwds {
-			m.Forward(
+			if err := m.Forward(
 				tunnel.ConnOpts{
 					Host: fwd.Host,
 					Port: uint(fwd.Port),
 					User: fwd.User,
 				},
 				fwd.Addrs.LocalAddr, fwd.Addrs.RemoteAddr,
-			)
+			); err != nil {
+				zap.L().Error("failed to open fwd", zap.Error(err))
+			}
 		}
 
 	}

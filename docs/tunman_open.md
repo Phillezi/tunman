@@ -32,9 +32,9 @@ tunman open root@localhost:2222 -p 8080:8090
 ```
   -h, --help              help for open
       --password string   SSH password
-  -P, --port string       SSH port (default 22 or from ~/.ssh/config)
+  -P, --port string       SSH port
   -p, --publish strings   Publish forwards, syntax <local-addr>:<local-port>:<remote-addr>:<local-port>, if "<local-addr>:" or "<remote-addr>:" is omitted then 0.0.0.0 will be used
-      --user string       SSH username (fallback to ~/.ssh/config)
+  -u, --user string       SSH username
 ```
 
 ### Options inherited from parent commands

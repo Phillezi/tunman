@@ -158,7 +158,7 @@ func WithProtoOpts(pw string, key []byte) []ConfigOption {
 		addAuthSockUse = false
 	}
 	if addAuthSockUse {
-		opts = append(opts, WithAuthSocket())
+		//opts = append(opts, WithAuthSocket())
 	}
 
 	return opts
