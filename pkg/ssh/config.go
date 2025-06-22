@@ -33,11 +33,14 @@ func getSSHClientConfig(target *Target, cfgs ...*ssh.ClientConfig) (*ssh.ClientC
 		target.User, err = ssh_config.GetStrict(target.Host, "User")
 		if err != nil || target.User == "" {
 			zap.L().Warn("failed to get user from ssh config", zap.Error(err))
-			if usr, err := user.Current(); err == nil {
-				target.User = usr.Username
-			} else {
-				zap.L().Warn("failed to get current user", zap.Error(err))
-				target.User = "user"
+			if viper.GetBool("default-to-user") {
+				zap.L().Info("defaulting to user running daemon")
+				if usr, err := user.Current(); err == nil {
+					target.User = usr.Username
+				} else {
+					zap.L().Warn("failed to get current user", zap.Error(err))
+					target.User = "root"
+				}
 			}
 		}
 	}

@@ -2,11 +2,9 @@ package cli
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/Phillezi/tunman-remaster/internal/connection"
 	"github.com/Phillezi/tunman-remaster/internal/parser"
-	"github.com/Phillezi/tunman-remaster/internal/ssh"
 	"github.com/Phillezi/tunman-remaster/interrupt"
 	ctrlpb "github.com/Phillezi/tunman-remaster/proto"
 	"github.com/Phillezi/tunman-remaster/utils"
@@ -19,26 +17,19 @@ var openCmd = &cobra.Command{
 	Use:   "open [host]",
 	Short: "Open a tunnel to a remote host",
 	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		host := args[0]
-		port := viper.GetString("port")
-		userVal := viper.GetString("user")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		u, h, p := parser.ParseTargetLoose(args[0])
+		host := h
+		port := utils.Or(viper.GetString("port"), p)
+		userVal := utils.Or(viper.GetString("user"), u)
 		pw := viper.GetString("password")
 
 		localRemoteMap, err := parser.ParsePublishes(viper.GetStringSlice("publish"))
 		if err != nil {
-			zap.L().Error("failed to parse", zap.Error(err))
-			os.Exit(1)
+			return fmt.Errorf("failed to parse, err: %s", err.Error())
 		}
 		if len(localRemoteMap) == 0 {
-			zap.L().Error("no fwds provided")
-			os.Exit(1)
-		}
-
-		cfg := ssh.Resolve(host)
-
-		if cfg.UseAgent {
-			//zap.L().Warn("using ssh agent is not impl yet")
+			return fmt.Errorf("no forwards provided")
 		}
 
 		addrPairs := make(map[string]*ctrlpb.AddrPair, len(localRemoteMap))
@@ -51,21 +42,16 @@ var openCmd = &cobra.Command{
 
 		if conn := connection.C(); conn != nil {
 			resp, err := conn.OpenFwd(interrupt.GetInstance().Context(), &ctrlpb.OpenRequest{Tunnels: []*ctrlpb.Tunnel{{
-				User: utils.Or(userVal, cfg.User, os.Getenv("USER")),
-				Host: cfg.Host,
-				Port: utils.ParsePort(utils.Or(port, cfg.Port)),
-				Pw:   pw,
-				Privkey: func() []byte {
-					if len(cfg.PrivateKey) == 0 {
-						return nil
-					}
-					return cfg.PrivateKey
-				}(),
+				User:        utils.Or(userVal),
+				Host:        host,
+				Port:        utils.ParsePort(utils.Or(port)),
+				Pw:          pw,
 				AddressPair: addrPairs,
 			}}})
 			if err != nil {
-				zap.L().Error("failed to execute open command", zap.Error(err))
-				return
+				fmt.Println(err.Error())
+				// not a input error, it is a connection error
+				return nil
 			}
 			if len(resp.Errors) > 0 {
 				for _, err := range resp.Errors {
@@ -76,6 +62,7 @@ var openCmd = &cobra.Command{
 				fmt.Println(id)
 			}
 		}
+		return nil
 	},
 }
 
