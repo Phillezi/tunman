@@ -2,10 +2,12 @@ package cli
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Phillezi/tunman-remaster/internal/connection"
 	"github.com/Phillezi/tunman-remaster/internal/parser"
 	"github.com/Phillezi/tunman-remaster/interrupt"
+	sshutil "github.com/Phillezi/tunman-remaster/pkg/ssh"
 	ctrlpb "github.com/Phillezi/tunman-remaster/proto"
 	"github.com/Phillezi/tunman-remaster/utils"
 	"github.com/spf13/cobra"
@@ -30,6 +32,20 @@ Bind addresses are optionally specified, if omitted they default to 0.0.0.0.`,
 tunman open root@localhost:2222 -p 8080:8090
 # The command above will open a tunnel and forward port 8090 inside the ssh host to 8080 of the host running the command.`,
 	Args: cobra.MinimumNArgs(1),
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
+		if len(args) > 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		var completions []cobra.Completion
+		for _, c := range sshutil.GetHosts() {
+			if strings.HasPrefix(c, toComplete) {
+				completions = append(completions, c)
+			}
+		}
+
+		return completions, cobra.ShellCompDirectiveNoFileComp
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		u, h, p := parser.ParseTargetLoose(args[0])
 		host := h
