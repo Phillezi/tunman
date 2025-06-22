@@ -1,11 +1,7 @@
 package cli
 
-import (
-	"fmt"
-)
-
 const (
-	tunmand = `
+	tunman = `
   __                                      
 _/  |_ __ __  ____   _____ _____    ____  
 \   __\  |  \/    \ /     \\__  \  /    \ 
@@ -17,7 +13,3 @@ _/  |_ __ __  ____   _____ _____    ____
 var (
 	version = "v0.0.1"
 )
-
-func startLog() {
-	fmt.Printf("%s\nVersion:\t\t\t%s\n", tunmand, version)
-}

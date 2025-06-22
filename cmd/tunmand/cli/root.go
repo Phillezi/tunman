@@ -24,7 +24,7 @@ var rootCmd = &cobra.Command{
 		log.Setup()
 		interrupt.GetInstance().AddShutdownHook(func() { zap.L().Info("daemon shutdown") })
 	},
-	Long: tundmand,
+	Long: tunmand,
 	Run: func(cmd *cobra.Command, args []string) {
 		lock.Acquire()
 		defer lock.Release()

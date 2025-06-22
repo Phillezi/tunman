@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"fmt"
+
 	"github.com/Phillezi/tunman/config"
 	"github.com/Phillezi/tunman/log"
 	"github.com/spf13/cobra"
@@ -8,16 +10,18 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use: "tunman",
-	Long: `
-  __                                      
-_/  |_ __ __  ____   _____ _____    ____  
-\   __\  |  \/    \ /     \\__  \  /    \ 
- |  | |  |  /   |  \  Y Y  \/ __ \|   |  \
- |__| |____/|___|  /__|_|  (____  /___|  /
-                 \/      \/     \/     \/ `,
+	Use:  "tunman",
+	Long: tunman,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		log.Setup()
+	},
+}
+
+var versionCmd = &cobra.Command{
+	Use:     "version",
+	Aliases: []string{"v"},
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(version)
 	},
 }
 
@@ -32,6 +36,8 @@ func init() {
 
 	rootCmd.PersistentFlags().Bool("stacktrace", false, "Show the stack trace in error logs")
 	viper.BindPFlag("stacktrace", rootCmd.PersistentFlags().Lookup("stacktrace"))
+
+	rootCmd.AddCommand(versionCmd)
 }
 
 func ExecuteE() error {

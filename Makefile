@@ -4,7 +4,7 @@ DAEMON_BINARY_NAME=$(CLI_BINARY_NAME)d
 BUILD_DIR=bin
 EXT=$(if $(filter windows,$(GOOS)),.exe,)
 SERVICE_TEMPLATE_DIR=templates
-# systemd is $(SERVICE_TEMPLATE_DIR)/systemd/tunmand.service
+VERSION=$(shell git describe --tags --abbrev=0)
 
 # Targets
 .PHONY: all proto build/* test release install clean lint docs
@@ -17,7 +17,7 @@ proto:
 build/%:
 	@echo "Building $*..."
 	@mkdir -p $(BUILD_DIR)
-	@go build -o $(BUILD_DIR)/$*$(EXT) ./cmd/$*
+	@go build -ldflags "-X github.com/Phillezi/tunman/cmd/$*/cli.version=$(VERSION)" -o $(BUILD_DIR)/$*$(EXT) ./cmd/$*
 	@echo "Build complete: $(BUILD_DIR)/$*$(EXT)"
 
 test:
@@ -26,7 +26,7 @@ test:
 release/%:
 	@echo "Building the application..."
 	@mkdir -p $(BUILD_DIR)
-	@go build -mod=readonly -ldflags "-w -s" -o $(BUILD_DIR)/$*$(EXT) ./cmd/$*
+	@go build -mod=readonly -ldflags "-w -s -X github.com/Phillezi/tunman/cmd/$*/cli.version=$(VERSION)" -o $(BUILD_DIR)/$*$(EXT) ./cmd/$*
 	@echo "Build complete."
 
 install: release

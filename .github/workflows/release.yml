@@ -18,6 +18,7 @@ jobs:
 
     env:
       CGO_ENABLED: 0
+      VERSION: ${{ github.ref_name }}
 
     steps:
       - name: Checkout repository
@@ -39,7 +40,7 @@ jobs:
 
           OUTPUT="${BIN_NAME}_${OS}_${ARCH}${EXT}"
 
-          GOOS=$OS GOARCH=$ARCH go build -ldflags "-w -s" -o "$OUTPUT" ./cmd/$BIN_NAME
+          GOOS=$OS GOARCH=$ARCH go build -ldflags "-w -s -X github.com/Phillezi/tunman/cmd/$*/cli.version=$VERSION" -o "$OUTPUT" ./cmd/$BIN_NAME
 
           mkdir "$BIN_NAME"
           mv "$OUTPUT" "$BIN_NAME/"
