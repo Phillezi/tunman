@@ -3,7 +3,7 @@ name: Release Binaries
 on:
   push:
     tags:
-      - 'v*'  # Trigger on version tags like v1.0.0
+      - "v*" # Trigger on version tags like v1.0.0
 
 jobs:
   build:
@@ -27,7 +27,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24.3'
+          go-version: "1.24.3"
 
       - name: Build ${{ matrix.binary }} for ${{ matrix.goos }}-${{ matrix.goarch }}
         run: |
@@ -40,7 +40,7 @@ jobs:
 
           OUTPUT="${BIN_NAME}_${OS}_${ARCH}${EXT}"
 
-          GOOS=$OS GOARCH=$ARCH go build -ldflags "-w -s -X github.com/Phillezi/tunman/cmd/$*/cli.version=$VERSION" -o "$OUTPUT" ./cmd/$BIN_NAME
+          GOOS=$OS GOARCH=$ARCH go build -ldflags "-w -s -X github.com/Phillezi/tunman/cmd/$BIN_NAME/cli.version=$VERSION" -o "$OUTPUT" ./cmd/$BIN_NAME
 
           mkdir "$BIN_NAME"
           mv "$OUTPUT" "$BIN_NAME/"
@@ -50,7 +50,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: binaries
+          name: binaries-${{ matrix.binary }}-${{ matrix.goos }}-${{ matrix.goarch }}
           path: dist/
 
   release:
@@ -62,12 +62,11 @@ jobs:
       - name: Download built artifacts
         uses: actions/download-artifact@v4
         with:
-          name: binaries
           path: dist/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*.tar.gz
+          files: dist/**/*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
