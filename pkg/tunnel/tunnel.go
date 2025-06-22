@@ -327,7 +327,11 @@ func (t *Tunnel) Forward(ap AddressPair) error {
 			defer ccancel()
 			select {
 			case <-ctxx.Done():
-				zap.L().Warn("timed out when trying to remove fwd on exit from fwds in tunnel", zap.String("id", id))
+				// if our app wants to exit it is ok, since this will just wait for a lock and remove a conn from itself
+				// but if it is a exit it does not matter
+				if interrupt.GetInstance().Context().Err() == nil {
+					zap.L().Warn("timed out when trying to remove fwd on exit from fwds in tunnel", zap.String("id", id))
+				}
 			default:
 				t.connMu.Lock()
 				defer t.connMu.Unlock()
