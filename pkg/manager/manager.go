@@ -121,7 +121,7 @@ func (m *Manager) Forward(remote tunnel.ConnOpts, localAddr string, remoteAddr s
 
 	if m.db != nil {
 		if err := m.db.SaveFwd(&ctrlpb.FwdState{
-			Id:    ser.Ser(tun.Hash(), ap.Hash()),
+			Id:    ser.Ser(remote.Hash(), ap.Hash()),
 			Addrs: &ctrlpb.AddrPair{LocalAddr: ap.LocalAddr, RemoteAddr: ap.RemoteAddr},
 			Host:  remote.Host,
 			User:  remote.User,
