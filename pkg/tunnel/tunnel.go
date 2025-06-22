@@ -13,8 +13,10 @@ import (
 	"time"
 
 	"github.com/Phillezi/tunman-remaster/pkg/ser"
+	sshutils "github.com/Phillezi/tunman-remaster/pkg/ssh"
 	ctrlpb "github.com/Phillezi/tunman-remaster/proto"
 	"github.com/Phillezi/tunman-remaster/utils"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/ssh"
 )
@@ -93,7 +95,11 @@ func WithContext(ctx context.Context) ConfigOption {
 // WithPassword returns an option to authenticate with password.
 func WithPassword(password string) ConfigOption {
 	return func(cfg *TunnelOpts) error {
-		cfg.Auth = []ssh.AuthMethod{ssh.Password(password)}
+		if len(cfg.Auth) == 0 {
+			cfg.Auth = []ssh.AuthMethod{ssh.Password(password)}
+		} else {
+			cfg.Auth = utils.Prepend(cfg.Auth, ssh.Password(password))
+		}
 		return nil
 	}
 }
@@ -105,7 +111,11 @@ func WithPrivateKey(key []byte) ConfigOption {
 		if err != nil {
 			return err
 		}
-		cfg.Auth = []ssh.AuthMethod{ssh.PublicKeys(signer)}
+		if len(cfg.Auth) == 0 {
+			cfg.Auth = []ssh.AuthMethod{ssh.PublicKeys(signer)}
+		} else {
+			cfg.Auth = utils.Prepend(cfg.Auth, ssh.PublicKeys(signer))
+		}
 		return nil
 	}
 }
@@ -138,12 +148,37 @@ type ConnOpts struct {
 
 // New creates a new SSH tunnel to host (user@addr).
 func New(user, addr string, opts ...ConfigOption) (*Tunnel, error) {
+	authMethod, err := sshutils.GetSSHAgentAuth()
+	if err != nil {
+		zap.L().Warn("Could not get ssh agent auth", zap.Error(err))
+		//return nil, err
+	}
+
+	hostKeyCallback, err := sshutils.GetHostKeyCallback()
+	if err != nil {
+		zap.L().Warn("could not get hostkey callback", zap.Error(err))
+		if !viper.GetBool("insecure") && !viper.GetBool("insecure-skip-hostkey-callback") {
+			return nil, err
+		}
+	}
+
 	fallbackCtx, fallbackCancel := context.WithCancel(context.Background())
 	cfg := &TunnelOpts{
 		ClientConfig: ssh.ClientConfig{
-			User:            user,
-			HostKeyCallback: ssh.InsecureIgnoreHostKey(), // Insecure, replace in production
-			Timeout:         10 * time.Second,
+			User: user,
+			HostKeyCallback: func() ssh.HostKeyCallback {
+				if hostKeyCallback != nil {
+					return hostKeyCallback
+				}
+				return ssh.InsecureIgnoreHostKey()
+			}(),
+			Timeout: 10 * time.Second,
+			Auth: func() []ssh.AuthMethod {
+				if authMethod != nil {
+					return []ssh.AuthMethod{authMethod}
+				}
+				return nil
+			}(),
 		},
 		ctx:    fallbackCtx,
 		cancel: fallbackCancel,
