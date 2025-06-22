@@ -225,6 +225,82 @@ func (x *Fwd) GetAddrs() *AddrPair {
 	return nil
 }
 
+type FwdState struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	User          string                 `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
+	Host          string                 `protobuf:"bytes,3,opt,name=host,proto3" json:"host,omitempty"`
+	Port          uint32                 `protobuf:"varint,4,opt,name=port,proto3" json:"port,omitempty"`
+	Addrs         *AddrPair              `protobuf:"bytes,5,opt,name=addrs,proto3" json:"addrs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FwdState) Reset() {
+	*x = FwdState{}
+	mi := &file_ctrl_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FwdState) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FwdState) ProtoMessage() {}
+
+func (x *FwdState) ProtoReflect() protoreflect.Message {
+	mi := &file_ctrl_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FwdState.ProtoReflect.Descriptor instead.
+func (*FwdState) Descriptor() ([]byte, []int) {
+	return file_ctrl_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *FwdState) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *FwdState) GetUser() string {
+	if x != nil {
+		return x.User
+	}
+	return ""
+}
+
+func (x *FwdState) GetHost() string {
+	if x != nil {
+		return x.Host
+	}
+	return ""
+}
+
+func (x *FwdState) GetPort() uint32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+func (x *FwdState) GetAddrs() *AddrPair {
+	if x != nil {
+		return x.Addrs
+	}
+	return nil
+}
+
 type PsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -233,7 +309,7 @@ type PsRequest struct {
 
 func (x *PsRequest) Reset() {
 	*x = PsRequest{}
-	mi := &file_ctrl_proto_msgTypes[3]
+	mi := &file_ctrl_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -245,7 +321,7 @@ func (x *PsRequest) String() string {
 func (*PsRequest) ProtoMessage() {}
 
 func (x *PsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ctrl_proto_msgTypes[3]
+	mi := &file_ctrl_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -258,7 +334,7 @@ func (x *PsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PsRequest.ProtoReflect.Descriptor instead.
 func (*PsRequest) Descriptor() ([]byte, []int) {
-	return file_ctrl_proto_rawDescGZIP(), []int{3}
+	return file_ctrl_proto_rawDescGZIP(), []int{4}
 }
 
 type PsResponse struct {
@@ -271,7 +347,7 @@ type PsResponse struct {
 
 func (x *PsResponse) Reset() {
 	*x = PsResponse{}
-	mi := &file_ctrl_proto_msgTypes[4]
+	mi := &file_ctrl_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -283,7 +359,7 @@ func (x *PsResponse) String() string {
 func (*PsResponse) ProtoMessage() {}
 
 func (x *PsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ctrl_proto_msgTypes[4]
+	mi := &file_ctrl_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -296,7 +372,7 @@ func (x *PsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PsResponse.ProtoReflect.Descriptor instead.
 func (*PsResponse) Descriptor() ([]byte, []int) {
-	return file_ctrl_proto_rawDescGZIP(), []int{4}
+	return file_ctrl_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *PsResponse) GetFwds() []*Fwd {
@@ -323,7 +399,7 @@ type OpenRequest struct {
 
 func (x *OpenRequest) Reset() {
 	*x = OpenRequest{}
-	mi := &file_ctrl_proto_msgTypes[5]
+	mi := &file_ctrl_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -335,7 +411,7 @@ func (x *OpenRequest) String() string {
 func (*OpenRequest) ProtoMessage() {}
 
 func (x *OpenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ctrl_proto_msgTypes[5]
+	mi := &file_ctrl_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -348,7 +424,7 @@ func (x *OpenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OpenRequest.ProtoReflect.Descriptor instead.
 func (*OpenRequest) Descriptor() ([]byte, []int) {
-	return file_ctrl_proto_rawDescGZIP(), []int{5}
+	return file_ctrl_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *OpenRequest) GetTunnels() []*Tunnel {
@@ -375,7 +451,7 @@ type OpenResponse struct {
 
 func (x *OpenResponse) Reset() {
 	*x = OpenResponse{}
-	mi := &file_ctrl_proto_msgTypes[6]
+	mi := &file_ctrl_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -387,7 +463,7 @@ func (x *OpenResponse) String() string {
 func (*OpenResponse) ProtoMessage() {}
 
 func (x *OpenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ctrl_proto_msgTypes[6]
+	mi := &file_ctrl_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -400,7 +476,7 @@ func (x *OpenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OpenResponse.ProtoReflect.Descriptor instead.
 func (*OpenResponse) Descriptor() ([]byte, []int) {
-	return file_ctrl_proto_rawDescGZIP(), []int{6}
+	return file_ctrl_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *OpenResponse) GetOpenedIds() []string {
@@ -426,7 +502,7 @@ type CloseRequest struct {
 
 func (x *CloseRequest) Reset() {
 	*x = CloseRequest{}
-	mi := &file_ctrl_proto_msgTypes[7]
+	mi := &file_ctrl_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -438,7 +514,7 @@ func (x *CloseRequest) String() string {
 func (*CloseRequest) ProtoMessage() {}
 
 func (x *CloseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ctrl_proto_msgTypes[7]
+	mi := &file_ctrl_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -451,7 +527,7 @@ func (x *CloseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CloseRequest.ProtoReflect.Descriptor instead.
 func (*CloseRequest) Descriptor() ([]byte, []int) {
-	return file_ctrl_proto_rawDescGZIP(), []int{7}
+	return file_ctrl_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *CloseRequest) GetIds() []string {
@@ -471,7 +547,7 @@ type CloseResponse struct {
 
 func (x *CloseResponse) Reset() {
 	*x = CloseResponse{}
-	mi := &file_ctrl_proto_msgTypes[8]
+	mi := &file_ctrl_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -483,7 +559,7 @@ func (x *CloseResponse) String() string {
 func (*CloseResponse) ProtoMessage() {}
 
 func (x *CloseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ctrl_proto_msgTypes[8]
+	mi := &file_ctrl_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -496,7 +572,7 @@ func (x *CloseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CloseResponse.ProtoReflect.Descriptor instead.
 func (*CloseResponse) Descriptor() ([]byte, []int) {
-	return file_ctrl_proto_rawDescGZIP(), []int{8}
+	return file_ctrl_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *CloseResponse) GetClosedIds() []string {
@@ -521,7 +597,7 @@ type CloseAllRequest struct {
 
 func (x *CloseAllRequest) Reset() {
 	*x = CloseAllRequest{}
-	mi := &file_ctrl_proto_msgTypes[9]
+	mi := &file_ctrl_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -533,7 +609,7 @@ func (x *CloseAllRequest) String() string {
 func (*CloseAllRequest) ProtoMessage() {}
 
 func (x *CloseAllRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ctrl_proto_msgTypes[9]
+	mi := &file_ctrl_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -546,7 +622,7 @@ func (x *CloseAllRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CloseAllRequest.ProtoReflect.Descriptor instead.
 func (*CloseAllRequest) Descriptor() ([]byte, []int) {
-	return file_ctrl_proto_rawDescGZIP(), []int{9}
+	return file_ctrl_proto_rawDescGZIP(), []int{10}
 }
 
 type CloseAllResponse struct {
@@ -559,7 +635,7 @@ type CloseAllResponse struct {
 
 func (x *CloseAllResponse) Reset() {
 	*x = CloseAllResponse{}
-	mi := &file_ctrl_proto_msgTypes[10]
+	mi := &file_ctrl_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -571,7 +647,7 @@ func (x *CloseAllResponse) String() string {
 func (*CloseAllResponse) ProtoMessage() {}
 
 func (x *CloseAllResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ctrl_proto_msgTypes[10]
+	mi := &file_ctrl_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -584,7 +660,7 @@ func (x *CloseAllResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CloseAllResponse.ProtoReflect.Descriptor instead.
 func (*CloseAllResponse) Descriptor() ([]byte, []int) {
-	return file_ctrl_proto_rawDescGZIP(), []int{10}
+	return file_ctrl_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *CloseAllResponse) GetOk() bool {
@@ -626,7 +702,13 @@ const file_ctrl_proto_rawDesc = "" +
 	"\x03Fwd\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12$\n" +
 	"\x06parent\x18\x02 \x01(\v2\f.ctrl.TunnelR\x06parent\x12$\n" +
-	"\x05addrs\x18\x03 \x01(\v2\x0e.ctrl.AddrPairR\x05addrs\"\v\n" +
+	"\x05addrs\x18\x03 \x01(\v2\x0e.ctrl.AddrPairR\x05addrs\"|\n" +
+	"\bFwdState\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04user\x18\x02 \x01(\tR\x04user\x12\x12\n" +
+	"\x04host\x18\x03 \x01(\tR\x04host\x12\x12\n" +
+	"\x04port\x18\x04 \x01(\rR\x04port\x12$\n" +
+	"\x05addrs\x18\x05 \x01(\v2\x0e.ctrl.AddrPairR\x05addrs\"\v\n" +
 	"\tPsRequest\"C\n" +
 	"\n" +
 	"PsResponse\x12\x1d\n" +
@@ -667,41 +749,43 @@ func file_ctrl_proto_rawDescGZIP() []byte {
 	return file_ctrl_proto_rawDescData
 }
 
-var file_ctrl_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_ctrl_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_ctrl_proto_goTypes = []any{
 	(*AddrPair)(nil),         // 0: ctrl.AddrPair
 	(*Tunnel)(nil),           // 1: ctrl.Tunnel
 	(*Fwd)(nil),              // 2: ctrl.Fwd
-	(*PsRequest)(nil),        // 3: ctrl.PsRequest
-	(*PsResponse)(nil),       // 4: ctrl.PsResponse
-	(*OpenRequest)(nil),      // 5: ctrl.OpenRequest
-	(*OpenResponse)(nil),     // 6: ctrl.OpenResponse
-	(*CloseRequest)(nil),     // 7: ctrl.CloseRequest
-	(*CloseResponse)(nil),    // 8: ctrl.CloseResponse
-	(*CloseAllRequest)(nil),  // 9: ctrl.CloseAllRequest
-	(*CloseAllResponse)(nil), // 10: ctrl.CloseAllResponse
-	nil,                      // 11: ctrl.Tunnel.AddressPairEntry
+	(*FwdState)(nil),         // 3: ctrl.FwdState
+	(*PsRequest)(nil),        // 4: ctrl.PsRequest
+	(*PsResponse)(nil),       // 5: ctrl.PsResponse
+	(*OpenRequest)(nil),      // 6: ctrl.OpenRequest
+	(*OpenResponse)(nil),     // 7: ctrl.OpenResponse
+	(*CloseRequest)(nil),     // 8: ctrl.CloseRequest
+	(*CloseResponse)(nil),    // 9: ctrl.CloseResponse
+	(*CloseAllRequest)(nil),  // 10: ctrl.CloseAllRequest
+	(*CloseAllResponse)(nil), // 11: ctrl.CloseAllResponse
+	nil,                      // 12: ctrl.Tunnel.AddressPairEntry
 }
 var file_ctrl_proto_depIdxs = []int32{
-	11, // 0: ctrl.Tunnel.address_pair:type_name -> ctrl.Tunnel.AddressPairEntry
+	12, // 0: ctrl.Tunnel.address_pair:type_name -> ctrl.Tunnel.AddressPairEntry
 	1,  // 1: ctrl.Fwd.parent:type_name -> ctrl.Tunnel
 	0,  // 2: ctrl.Fwd.addrs:type_name -> ctrl.AddrPair
-	2,  // 3: ctrl.PsResponse.fwds:type_name -> ctrl.Fwd
-	1,  // 4: ctrl.OpenRequest.tunnels:type_name -> ctrl.Tunnel
-	0,  // 5: ctrl.Tunnel.AddressPairEntry.value:type_name -> ctrl.AddrPair
-	3,  // 6: ctrl.TunnelService.Ps:input_type -> ctrl.PsRequest
-	5,  // 7: ctrl.TunnelService.OpenFwd:input_type -> ctrl.OpenRequest
-	7,  // 8: ctrl.TunnelService.CloseFwd:input_type -> ctrl.CloseRequest
-	9,  // 9: ctrl.TunnelService.CloseAllFwds:input_type -> ctrl.CloseAllRequest
-	4,  // 10: ctrl.TunnelService.Ps:output_type -> ctrl.PsResponse
-	6,  // 11: ctrl.TunnelService.OpenFwd:output_type -> ctrl.OpenResponse
-	8,  // 12: ctrl.TunnelService.CloseFwd:output_type -> ctrl.CloseResponse
-	10, // 13: ctrl.TunnelService.CloseAllFwds:output_type -> ctrl.CloseAllResponse
-	10, // [10:14] is the sub-list for method output_type
-	6,  // [6:10] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	0,  // 3: ctrl.FwdState.addrs:type_name -> ctrl.AddrPair
+	2,  // 4: ctrl.PsResponse.fwds:type_name -> ctrl.Fwd
+	1,  // 5: ctrl.OpenRequest.tunnels:type_name -> ctrl.Tunnel
+	0,  // 6: ctrl.Tunnel.AddressPairEntry.value:type_name -> ctrl.AddrPair
+	4,  // 7: ctrl.TunnelService.Ps:input_type -> ctrl.PsRequest
+	6,  // 8: ctrl.TunnelService.OpenFwd:input_type -> ctrl.OpenRequest
+	8,  // 9: ctrl.TunnelService.CloseFwd:input_type -> ctrl.CloseRequest
+	10, // 10: ctrl.TunnelService.CloseAllFwds:input_type -> ctrl.CloseAllRequest
+	5,  // 11: ctrl.TunnelService.Ps:output_type -> ctrl.PsResponse
+	7,  // 12: ctrl.TunnelService.OpenFwd:output_type -> ctrl.OpenResponse
+	9,  // 13: ctrl.TunnelService.CloseFwd:output_type -> ctrl.CloseResponse
+	11, // 14: ctrl.TunnelService.CloseAllFwds:output_type -> ctrl.CloseAllResponse
+	11, // [11:15] is the sub-list for method output_type
+	7,  // [7:11] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_ctrl_proto_init() }
@@ -715,7 +799,7 @@ func file_ctrl_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ctrl_proto_rawDesc), len(file_ctrl_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

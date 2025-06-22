@@ -25,6 +25,14 @@ message Fwd {
   AddrPair addrs = 3;
 }
 
+message FwdState {
+  string id = 1;
+  string user = 2;
+  string host = 3;
+  uint32 port = 4;
+  AddrPair addrs = 5;
+}
+
 message PsRequest {}
 
 message PsResponse {

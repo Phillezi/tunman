@@ -69,6 +69,9 @@ func init() {
 
 	rootCmd.PersistentFlags().Bool("pprof", false, "Enable pprof profiling HTTP server")
 	viper.BindPFlag("pprof", rootCmd.PersistentFlags().Lookup("pprof"))
+
+	rootCmd.PersistentFlags().String("dbpath", defaults.DefaultDBPath, "Set the path for the db")
+	viper.BindPFlag("dbpath", rootCmd.PersistentFlags().Lookup("dbpath"))
 }
 
 func ExecuteE() error {

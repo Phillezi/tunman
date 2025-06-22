@@ -5,9 +5,14 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/Phillezi/tunman-remaster/internal/defaults"
+	"github.com/Phillezi/tunman-remaster/interrupt"
+	"github.com/Phillezi/tunman-remaster/pkg/repo"
 	"github.com/Phillezi/tunman-remaster/pkg/ser"
 	"github.com/Phillezi/tunman-remaster/pkg/tunnel"
 	ctrlpb "github.com/Phillezi/tunman-remaster/proto"
+	"github.com/Phillezi/tunman-remaster/utils"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
@@ -16,6 +21,8 @@ type Manager struct {
 	ctrlpb.UnimplementedTunnelServiceServer
 	tunnels map[string]*WTunnel
 	mu      sync.RWMutex
+
+	db *repo.Repo
 }
 
 type WTunnel struct {
@@ -24,10 +31,40 @@ type WTunnel struct {
 }
 
 func New() *Manager {
-	return &Manager{
+	r, err := repo.OpenDB(utils.Or(viper.GetString("dbpath"), defaults.DefaultDBPath))
+	if err != nil {
+		zap.L().Error("failed to open db", zap.Error(err))
+	}
+
+	m := &Manager{
 		ctx:     context.Background(),
 		tunnels: make(map[string]*WTunnel),
+		db:      r,
 	}
+
+	if r != nil {
+		interrupt.GetInstance().AddShutdownHook(func() { r.Close() })
+
+		fwds, err := r.LoadAllFwds()
+		if err != nil {
+			zap.L().Error("failed to load fwds", zap.Error(err))
+			return m
+		}
+
+		for _, fwd := range fwds {
+			m.Forward(
+				tunnel.ConnOpts{
+					Host: fwd.Host,
+					Port: uint(fwd.Port),
+					User: fwd.User,
+				},
+				fwd.Addrs.LocalAddr, fwd.Addrs.RemoteAddr,
+			)
+		}
+
+	}
+
+	return m
 }
 
 func (m *Manager) Shutdown() {
@@ -76,6 +113,18 @@ func (m *Manager) Forward(remote tunnel.ConnOpts, localAddr string, remoteAddr s
 	ap := tunnel.AddressPair{LocalAddr: localAddr, RemoteAddr: remoteAddr}
 	if tun.Exists(ap.Hash()) {
 		return fmt.Errorf("connection already exists")
+	}
+
+	if m.db != nil {
+		if err := m.db.SaveFwd(&ctrlpb.FwdState{
+			Id:    ser.Ser(tun.Hash(), ap.Hash()),
+			Addrs: &ctrlpb.AddrPair{LocalAddr: ap.LocalAddr, RemoteAddr: ap.RemoteAddr},
+			Host:  remote.Host,
+			User:  remote.User,
+			Port:  uint32(remote.Port),
+		}); err != nil {
+			zap.L().Warn("failed to persist fwd", zap.Error(err))
+		}
 	}
 
 	go func() {
@@ -149,6 +198,11 @@ func (m *Manager) CloseFwd(_ context.Context, req *ctrlpb.CloseRequest) (*ctrlpb
 			if closedC > 0 {
 				closed = append(closed, closedD...)
 				tunConnMap[tunHash] -= closedC
+				if m.db != nil {
+					if err := m.db.DeleteFwds(closedD...); err != nil {
+						zap.L().Warn("failed to delete persisted fwds", zap.Error(err))
+					}
+				}
 			}
 			if len(errorsS) > 0 {
 				errors = append(errors, errorsS...)
@@ -176,6 +230,11 @@ func (m *Manager) CloseAllFwds(context.Context, *ctrlpb.CloseAllRequest) (*ctrlp
 			zap.L().Info("closed tunnel", zap.String("id", id))
 		}
 		m.tunnels = make(map[string]*WTunnel)
+		if m.db != nil {
+			if err := m.db.NukeFwds(); err != nil {
+				zap.L().Error("failed to nuke fwds bucket", zap.Error(err))
+			}
+		}
 		return &ctrlpb.CloseAllResponse{Ok: true, Error: ""}, nil
 	}
 	return &ctrlpb.CloseAllResponse{Ok: false, Error: "No open tunnels"}, nil
