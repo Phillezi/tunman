@@ -184,7 +184,7 @@ func New(user, host string, port uint, opts ...ConfigOption) (*Tunnel, error) {
 			User: user,
 			Host: host,
 			Port: port,
-			addr: client.Conn.RemoteAddr().String(),
+			addr: "",
 		},
 		conns: make(map[string]*FwdConn),
 	}, nil

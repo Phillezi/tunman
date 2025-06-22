@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/Phillezi/tunman-remaster/internal/defaults"
 	"github.com/Phillezi/tunman-remaster/interrupt"
@@ -45,11 +46,14 @@ func New() *Manager {
 	if r != nil {
 		interrupt.GetInstance().AddShutdownHook(func() { r.Close() })
 
+		start := time.Now()
 		fwds, err := r.LoadAllFwds()
+		end := time.Now()
 		if err != nil {
 			zap.L().Error("failed to load fwds", zap.Error(err))
 			return m
 		}
+		zap.L().Info("loaded state in", zap.Duration("loadTime", end.Sub(start)))
 
 		for _, fwd := range fwds {
 			m.Forward(
