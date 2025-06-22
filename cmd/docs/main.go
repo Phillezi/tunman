@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/Phillezi/tunman-remaster/cmd/tunman/cli"
+	"github.com/Phillezi/tunman/cmd/tunman/cli"
 	"github.com/spf13/cobra/doc"
 	"go.uber.org/zap"
 )

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Phillezi/tunman-remaster/internal/defaults"
-	"github.com/Phillezi/tunman-remaster/utils"
+	"github.com/Phillezi/tunman/internal/defaults"
+	"github.com/Phillezi/tunman/utils"
 )
 
 func ParsePublishes(publishes []string) (map[string]string, error) {

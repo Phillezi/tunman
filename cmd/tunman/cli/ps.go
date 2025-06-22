@@ -3,9 +3,9 @@ package cli
 import (
 	"fmt"
 
-	"github.com/Phillezi/tunman-remaster/internal/connection"
-	"github.com/Phillezi/tunman-remaster/interrupt"
-	ctrlpb "github.com/Phillezi/tunman-remaster/proto"
+	"github.com/Phillezi/tunman/internal/connection"
+	"github.com/Phillezi/tunman/interrupt"
+	ctrlpb "github.com/Phillezi/tunman/proto"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Phillezi/tunman-remaster/utils"
+	"github.com/Phillezi/tunman/utils"
 	"github.com/kevinburke/ssh_config"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/ssh"

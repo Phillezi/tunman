@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/Phillezi/tunman-remaster/cmd/tunmand/cli"
+	"github.com/Phillezi/tunman/cmd/tunmand/cli"
 )
 
 func main() {

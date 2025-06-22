@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	ctrlpb "github.com/Phillezi/tunman-remaster/proto"
+	ctrlpb "github.com/Phillezi/tunman/proto"
 	"go.etcd.io/bbolt"
 	berrors "go.etcd.io/bbolt/errors"
 	"go.uber.org/zap"

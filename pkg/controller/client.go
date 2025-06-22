@@ -1,7 +1,7 @@
 package controller
 
 import (
-	ctrlpb "github.com/Phillezi/tunman-remaster/proto"
+	ctrlpb "github.com/Phillezi/tunman/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

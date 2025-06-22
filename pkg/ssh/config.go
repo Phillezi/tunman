@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Phillezi/tunman-remaster/utils"
+	"github.com/Phillezi/tunman/utils"
 	"github.com/kevinburke/ssh_config"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"

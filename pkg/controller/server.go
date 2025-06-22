@@ -8,7 +8,7 @@ import (
 	"os"
 	"runtime"
 
-	ctrlpb "github.com/Phillezi/tunman-remaster/proto"
+	ctrlpb "github.com/Phillezi/tunman/proto"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )

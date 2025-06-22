@@ -3,10 +3,10 @@ package connection
 import (
 	"sync"
 
-	"github.com/Phillezi/tunman-remaster/internal/defaults"
-	"github.com/Phillezi/tunman-remaster/pkg/controller"
-	ctrlpb "github.com/Phillezi/tunman-remaster/proto"
-	"github.com/Phillezi/tunman-remaster/utils"
+	"github.com/Phillezi/tunman/internal/defaults"
+	"github.com/Phillezi/tunman/pkg/controller"
+	ctrlpb "github.com/Phillezi/tunman/proto"
+	"github.com/Phillezi/tunman/utils"
 	"go.uber.org/zap"
 )
 

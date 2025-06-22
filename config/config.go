@@ -5,7 +5,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/Phillezi/tunman-remaster/utils"
+	"github.com/Phillezi/tunman/utils"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )

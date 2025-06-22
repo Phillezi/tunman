@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Phillezi/tunman-remaster/utils"
+	"github.com/Phillezi/tunman/utils"
 )
 
 func GetHosts() []string {

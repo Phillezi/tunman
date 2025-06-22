@@ -62,7 +62,7 @@ install_binary() {
   local INSTALL_DIR="${CUSTOM_OUTPUT_DIR:-/usr/local/bin}"
   local OS="${CUSTOM_OS:-$(uname -s)}"
   local ARCH="${CUSTOM_ARCH:-$(uname -m)}"
-  local GITHUB_REPO="Phillezi/tunman2"
+  local GITHUB_REPO="Phillezi/tunman"
 
   # Normalize OS
   case "$OS" in

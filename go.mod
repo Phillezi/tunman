@@ -1,4 +1,4 @@
-module github.com/Phillezi/tunman-remaster
+module github.com/Phillezi/tunman
 
 go 1.24.3
 

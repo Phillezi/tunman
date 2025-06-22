@@ -3,7 +3,7 @@ package lock
 import (
 	"os"
 
-	"github.com/Phillezi/tunman-remaster/internal/defaults"
+	"github.com/Phillezi/tunman/internal/defaults"
 	"github.com/gofrs/flock"
 	"go.uber.org/zap"
 )

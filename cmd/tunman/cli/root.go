@@ -1,8 +1,8 @@
 package cli
 
 import (
-	"github.com/Phillezi/tunman-remaster/config"
-	"github.com/Phillezi/tunman-remaster/log"
+	"github.com/Phillezi/tunman/config"
+	"github.com/Phillezi/tunman/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
